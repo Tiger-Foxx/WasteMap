@@ -1,0 +1,11 @@
+
+
+D'Antananarivo à Yaoundé en passant par Brazzaville, l'insalubrité étouffe les villes africaines. Le manque de données des mairies et l'incivisme aggravent une crise qui touche tout le continent. Face à ce défi majeur, je propose WasteMap : une application mobile dopée à l'Intelligence Artificielle qui transforme l'action environnementale en gain financier.
+
+En tant qu'ingénieur, je propose une architecture reposant sur deux niveaux d'engagement :
+1. Le Radar : Le citoyen photographie un dépôt sauvage. Notre IA (vision par ordinateur) classifie la matière, estime le volume, géolocalise l'alerte et lui attribue des "EcoPoints".
+2. L'Action (Bonus) : Si l'utilisateur nettoie la zone, l'IA valide l'effort via une analyse vidéo "avant/après" anti-fraude. Ce nettoyage débloque un multiplicateur de points massif, poussant à la création d'événements de nettoyage communautaires.
+
+Pour contourner le manque de coopération spontanée, nous lions l'intérêt individuel à l'écosystème Orange. Les EcoPoints sont convertibles exclusivement en crédit, forfaits Data ou via Orange Money. Orange gagne un levier d'acquisition massif, s'imposant comme l'opérateur "vert" de référence.
+
+Le modèle est hyper-scalable. Au-delà de la publicité, nous vendons ces datas (SaaS) aux municipalités pour guider leurs camions, et un accès premium aux recycleurs. WasteMap, c'est la technologie et l'action citoyenne pour des villes durables !
