@@ -52,7 +52,7 @@ export const ScannerFAB = () => {
 const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 100,
     right: 20,
     zIndex: 999,
     shadowColor: colors.primary,

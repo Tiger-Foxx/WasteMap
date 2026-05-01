@@ -20,6 +20,8 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
+*.apk
+
 base64.txt
 secret_base64.txt
 wastemap.jks
