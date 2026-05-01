@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="./assets/logo-orange.png" width="120" height="120" alt="WasteMap Logo" />
-
+  <img src="./assets/icon.png" width="120" height="120" alt="WasteMap Logo" />
   <h1>WasteMap</h1>
 
   <p>Sophisticated environmental monitoring and intelligent waste management platform.</p>
