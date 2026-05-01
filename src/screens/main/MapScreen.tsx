@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, StatusBar, TouchableOpacity, ScrollView, Platform, Animated, Easing } from 'react-native';
+import { WebView } from 'react-native-webview';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components';
@@ -102,57 +103,127 @@ export const MapScreen = ({ navigation }: any) => {
 
   const selected = reports.find((r) => r.id === selectedReport);
 
+  // Génération du HTML Leaflet dynamique
+  const generateLeafletHTML = () => {
+    const markersJS = filteredReports.map(report => {
+      const color = gravityColors[report.analysis.gravity];
+      return `
+        var markerIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: "<div class='pulse-container'><div class='marker-pulse-ring' style='background-color: ${color}'></div><div class='marker-core' style='background-color: ${color}'><span style='color:white; font-size: 16px;'>🗑</span></div></div>",
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+        L.marker([${report.location.latitude}, ${report.location.longitude}], {icon: markerIcon}).addTo(map)
+         .on('click', function() {
+           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'report', id: '${report.id}' }));
+         });
+      `;
+    }).join('\n');
+
+    const collectionPointsJS = collectionPoints.filter(cp => cp.isActive).map(cp => {
+      const isHysacam = cp.type === 'hysacam';
+      const bgColor = isHysacam ? '#1E293B' : '${colors.primary}';
+      return `
+        var cpIcon = L.divIcon({
+          className: 'cp-icon',
+          html: "<div style='background-color: white; border: 2px solid ${bgColor}; border-radius: 20px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;'><span style='color: ${bgColor}; font-size: 16px;'>${isHysacam ? '🏢' : '🍃'}</span></div>",
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+        L.marker([${cp.location.latitude}, ${cp.location.longitude}], {icon: cpIcon}).addTo(map);
+      `;
+    }).join('\n');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          body { padding: 0; margin: 0; }
+          #map { height: 100vh; width: 100vw; background-color: #E2E8F0; }
+          .leaflet-control-attribution { display: none; }
+          .custom-div-icon {
+            background: transparent;
+            border: none;
+          }
+          .pulse-container {
+            position: relative;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .marker-core {
+            border-radius: 15px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            border: 2px solid white;
+          }
+          .marker-pulse-ring {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            z-index: 1;
+            opacity: 0.6;
+            animation: pulse-animation 2s ease-out infinite;
+          }
+          @keyframes pulse-animation {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(3); opacity: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map', {zoomControl: false}).setView([${YAOUNDE_REGION.latitude}, ${YAOUNDE_REGION.longitude}], 13);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+          }).addTo(map);
+          ${markersJS}
+          ${collectionPointsJS}
+        </script>
+      </body>
+      </html>
+    `;
+  };
+
+  const onMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'report') {
+        setSelectedReport(data.id === selectedReport ? null : data.id);
+      }
+    } catch(e) {}
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-      {/* ── MAP ── */}
-      <MapView
-        style={styles.map}
-        provider={PROVIDER_DEFAULT}
-        initialRegion={YAOUNDE_REGION}
-        showsUserLocation={false} 
-        showsMyLocationButton={false}
-        mapPadding={{ top: insets.top + 100, right: 0, bottom: 0, left: 0 }}
-      >
-        {/* ... markers ... */}
-        {collectionPoints.filter(cp => cp.isActive).map((cp) => (
-          <Marker
-            key={cp.id}
-            coordinate={{
-              latitude: cp.location.latitude,
-              longitude: cp.location.longitude,
-            }}
-            tracksViewChanges={false}
-          >
-            <View style={[styles.collectionPin, { borderColor: cp.type === 'hysacam' ? '#1E293B' : colors.primary }]}>
-              <Ionicons 
-                name={cp.type === 'hysacam' ? "trash-bin" : "leaf"} 
-                size={18} 
-                color={cp.type === 'hysacam' ? '#1E293B' : colors.primary} 
-              />
-            </View>
-          </Marker>
-        ))}
-
-        {filteredReports.map((report) => {
-          const isSelected = selectedReport === report.id;
-          return (
-            <Marker
-              key={report.id}
-              coordinate={{
-                latitude: report.location.latitude,
-                longitude: report.location.longitude,
-              }}
-              onPress={() => setSelectedReport(isSelected ? null : report.id)}
-              zIndex={isSelected ? 999 : 1}
-              tracksViewChanges={true} // Obligatoire sur Android pour autoriser l'animation Reanimated et empêcher la disparition
-            >
-              <PulsingMarker color={gravityColors[report.analysis.gravity]} isSelected={isSelected} />
-            </Marker>
-          );
-        })}
-      </MapView>
+      {/* ── MAP (LEAFLET via WEBVIEW) ── */}
+      <View style={[styles.map, { backgroundColor: '#E2E8F0' }]}>
+        <WebView 
+           showsVerticalScrollIndicator={false}
+           showsHorizontalScrollIndicator={false}
+           originWhitelist={['*']}
+           source={{ html: generateLeafletHTML() }}
+           onMessage={onMessage}
+           style={{ flex: 1, backgroundColor: 'transparent' }}
+        />
+      </View>
 
       {/* ── TOP HUD (No overlaps, fully stacked) ── */}
       <View style={[styles.topHudContainer, { paddingTop: Math.max(insets.top, 20) }]}>
