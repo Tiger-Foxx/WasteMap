@@ -233,7 +233,7 @@ export const MOCK_REWARDS: Reward[] = [
   { id: 'rw4', title: '500 FCFA Crédit', description: 'Crédit de communication Orange', cost: 300, type: 'credit', iconName: 'phone', isExclusive: false },
   { id: 'rw5', title: '1000 FCFA Crédit', description: 'Crédit de communication Orange', cost: 550, type: 'credit', iconName: 'phone', isExclusive: false },
   { id: 'rw6', title: '2000 FCFA Crédit', description: 'Crédit de communication Orange', cost: 1000, type: 'credit', iconName: 'phone', isExclusive: false },
-  { id: 'rw7', title: 'Pass WasteMap 🌿', description: 'Forfait EXCLUSIF : 5Go + 200min d\'appels à prix réduit. Réservé aux Éco-Héros !', cost: 2000, type: 'special_pass', iconName: 'star', isExclusive: true, minTrustScore: 500, validityDays: 30 },
+  { id: 'rw7', title: 'Pass WasteMap ', description: 'Forfait EXCLUSIF : 5Go + 200min d\'appels à prix réduit. Réservé aux Éco-Héros !', cost: 2000, type: 'special_pass', iconName: 'star', isExclusive: true, minTrustScore: 500, validityDays: 30 },
   { id: 'rw8', title: 'Réduction Forfait -30%', description: '30% de réduction sur votre prochain forfait Orange mensuel', cost: 800, type: 'reduction', iconName: 'percent', isExclusive: false },
 ];
 
@@ -252,7 +252,7 @@ export const MOCK_EVENTS: CommunityEvent[] = [
     ],
     maxParticipants: 30, totalEcoPointsEarned: 495,
     scheduledAt: '2026-04-20T07:00:00Z', estimatedDurationMinutes: 180, status: 'completed',
-    sponsorName: 'Brasseries du Cameroun', sponsorMessage: 'Le nettoyage de Mokolo est soutenu par Brasseries du Cameroun 🍺',
+    sponsorName: 'Brasseries du Cameroun', sponsorMessage: 'Le nettoyage de Mokolo est soutenu par Brasseries du Cameroun ',
     createdAt: '2026-04-18T10:00:00Z',
   },
   {
@@ -299,9 +299,9 @@ export const MOCK_QUARTER_RANKINGS: QuarterRanking[] = [
 // ─── Notifications ──────────────────────────────────────────
 
 export const MOCK_NOTIFICATIONS: AppNotification[] = [
-  { id: 'n1', userId: 'u1', title: 'Signalement confirmé ✅', body: 'Votre signalement à Mvog-Ada a été confirmé par 3 autres citoyens.', type: 'report_update', referenceId: 'r1', isRead: false, createdAt: '2026-04-30T10:00:00Z' },
-  { id: 'n2', userId: 'u1', title: 'Nettoyage validé ! 🎉', body: 'Votre nettoyage à Nlongkak a été validé par l\'IA. +250 EcoPoints !', type: 'cleaning_validated', referenceId: 'c1', isRead: true, createdAt: '2026-04-26T08:15:00Z' },
-  { id: 'n3', userId: 'u1', title: 'Nouveau badge débloqué 🏅', body: 'Félicitations ! Vous avez débloqué le badge "Nettoyeur Argent".', type: 'badge_unlocked', referenceId: 'b5', isRead: true, createdAt: '2026-04-25T11:00:00Z' },
-  { id: 'n4', userId: 'u1', title: 'Événement Flash à venir 📢', body: 'Le "Challenge Biyem-Assi Vert" est prévu pour le 3 mai. Rejoignez l\'événement !', type: 'event_invite', referenceId: 'ev2', isRead: false, createdAt: '2026-04-29T14:30:00Z' },
-  { id: 'n5', userId: 'u1', title: 'Crédit activé 📱', body: '1000 FCFA de crédit Orange ont été ajoutés à votre compte.', type: 'reward_activated', referenceId: 'rw5', isRead: true, createdAt: '2026-04-24T12:05:00Z' },
+  { id: 'n1', userId: 'u1', title: 'Signalement confirmé ', body: 'Votre signalement à Mvog-Ada a été confirmé par 3 autres citoyens.', type: 'report_update', referenceId: 'r1', isRead: false, createdAt: '2026-04-30T10:00:00Z' },
+  { id: 'n2', userId: 'u1', title: 'Nettoyage validé ! ', body: 'Votre nettoyage à Nlongkak a été validé par l\'IA. +250 EcoPoints !', type: 'cleaning_validated', referenceId: 'c1', isRead: true, createdAt: '2026-04-26T08:15:00Z' },
+  { id: 'n3', userId: 'u1', title: 'Nouveau badge débloqué ', body: 'Félicitations ! Vous avez débloqué le badge "Nettoyeur Argent".', type: 'badge_unlocked', referenceId: 'b5', isRead: true, createdAt: '2026-04-25T11:00:00Z' },
+  { id: 'n4', userId: 'u1', title: 'Événement Flash à venir ', body: 'Le "Challenge Biyem-Assi Vert" est prévu pour le 3 mai. Rejoignez l\'événement !', type: 'event_invite', referenceId: 'ev2', isRead: false, createdAt: '2026-04-29T14:30:00Z' },
+  { id: 'n5', userId: 'u1', title: 'Crédit activé ', body: '1000 FCFA de crédit Orange ont été ajoutés à votre compte.', type: 'reward_activated', referenceId: 'rw5', isRead: true, createdAt: '2026-04-24T12:05:00Z' },
 ];
