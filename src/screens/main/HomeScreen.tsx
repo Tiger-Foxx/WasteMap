@@ -434,14 +434,14 @@ const styles = StyleSheet.create({
   recentSection: {
     paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 32,
+    paddingBottom: 5,
     marginTop: 8,
     backgroundColor: '#F1F5F9', // Légèrement assombri
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   recentListScroll: {
-    maxHeight: 400, // Permet le scroll interne de la tuile
+    maxHeight: 500,// Permet le scroll interne de la tuile
   },
   activityOldCard: {
     marginBottom: 6, // Plus serrées verticalement

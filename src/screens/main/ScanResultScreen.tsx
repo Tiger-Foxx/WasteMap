@@ -14,6 +14,7 @@ const { width } = Dimensions.get('window');
 interface ScanResultScreenProps {
   onClose: () => void;
   onConfirm: (analysis: WasteAnalysis) => void;
+  onCleanNow?: (analysis: WasteAnalysis) => void;
 }
 
 // Résultat simulé
@@ -29,7 +30,7 @@ const MOCK_RESULT: WasteAnalysis = {
   confidence: 0.92,
 };
 
-export const ScanResultScreen = ({ onClose, onConfirm }: ScanResultScreenProps) => {
+export const ScanResultScreen = ({ onClose, onConfirm, onCleanNow }: ScanResultScreenProps) => {
   const [phase, setPhase] = useState<'results' | 'success'>('results');
 
   // Animations
@@ -82,10 +83,14 @@ export const ScanResultScreen = ({ onClose, onConfirm }: ScanResultScreenProps) 
         }
       }, intervalTime);
 
-      // Delay exit to let user enjoy the screen
-      setTimeout(() => onConfirm(MOCK_RESULT), 5000);
+      setTimeout(() => {
+        // We will show buttons instead of auto-exiting
+        setShowActions(true);
+      }, 3000);
     });
   };
+
+  const [showActions, setShowActions] = useState(false);
 
   // ════════════════════════════════════════════════════════════
   // PHASE: SUCCESS (Ultra minimal + Lottie)
@@ -111,19 +116,46 @@ export const ScanResultScreen = ({ onClose, onConfirm }: ScanResultScreenProps) 
             Bravo ! Votre contribution aide à préserver notre écosystème.
           </Text>
           
-          {/* Animated EcoPoints with small plant Lottie */}
-          <View style={[styles.pointsEarnedFlat, { marginTop: 32 }]}>
+          {/* Animated EcoPoints with large plant Lottie breaking out */}
+          <View style={[styles.pointsEarnedFlat, { marginTop: 40, overflow: 'visible', position: 'relative' }]}>
             <LottieView
               source={require('../../../assets/lotties/Hand holding plant seedling.json')}
               autoPlay
               loop
-              style={{ width: 40, height: 40, marginRight: 8, marginLeft: -10 }}
+              style={{ position: 'absolute', left: -25, top: -35, width: 90, height: 90, zIndex: 10 }}
             />
-            <Text variant="xxxl" weight="bold" color={colors.primary}>
+            <Text variant="xxxl" weight="bold" color={colors.primary} style={{ marginLeft: 40 }}>
               +{displayPoints}
             </Text>
             <Text variant="m" weight="semiBold" color={colors.primary} style={{ marginLeft: 8 }}>EcoPoints</Text>
           </View>
+
+          {showActions && (
+            <Animated.View style={{ marginTop: 40, width: '100%', paddingHorizontal: 24, opacity: 1 }}>
+              <TouchableOpacity 
+                style={[styles.btnPrimaryFlat, { marginBottom: 24 }]} 
+                onPress={() => onConfirm(MOCK_RESULT)}
+                activeOpacity={0.9}
+              >
+                <Text variant="m" weight="bold" color="#FFFFFF">
+                  Retour à la carte
+                </Text>
+              </TouchableOpacity>
+              
+              <Text variant="s" color={colors.textMuted} align="center" style={{ marginBottom: 12 }}>
+                Optionnel : Vous êtes sur place ?
+              </Text>
+              <TouchableOpacity 
+                style={[styles.btnSecondaryFlat, { height: 48, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9' }]} 
+                onPress={() => onCleanNow ? onCleanNow(MOCK_RESULT) : onConfirm(MOCK_RESULT)}
+                activeOpacity={0.7}
+              >
+                <Text variant="m" weight="bold" color={colors.textDark}>
+                  Nettoyer immédiatement
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
 
         </Animated.View>
       </View>

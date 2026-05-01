@@ -88,8 +88,8 @@ const PulsingMarker = ({ color, isSelected }: { color: string; isSelected: boole
   );
 };
 
-export const MapScreen = () => {
-  const { reports, collectionPoints } = useAppStore();
+export const MapScreen = ({ navigation }: any) => {
+  const { reports, collectionPoints, activeCleaningSession } = useAppStore();
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'cleaned'>('all');
@@ -241,7 +241,7 @@ export const MapScreen = () => {
 
       {/* ── PANNEAU DÉTAIL EN BAS ── */}
       {selected ? (
-        <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom, 24) + 80 }]}>
           <View style={styles.sheetHeader}>
              <View style={styles.badgeUrgency}>
                <View style={[styles.urgencyDot, { backgroundColor: gravityColors[selected.analysis.gravity] }]} />
@@ -282,11 +282,28 @@ export const MapScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.mainActionBtn} activeOpacity={0.9}>
-             <Text variant="s" weight="bold" color={colors.white}>
-               Organiser une collecte
-             </Text>
-          </TouchableOpacity>
+          {selected.status === 'pending' && (
+            <TouchableOpacity 
+              style={styles.mainActionBtn} 
+              activeOpacity={0.9}
+              onPress={() => {
+                setSelectedReport(null);
+                navigation.navigate('CleaningAction', { reportId: selected.id });
+              }}
+            >
+               <Ionicons 
+                 name={activeCleaningSession?.reportId === selected.id ? "play-circle" : "trash-bin"} 
+                 size={20} 
+                 color={colors.white} 
+                 style={{ marginRight: 8 }} 
+               />
+               <Text variant="s" weight="bold" color={colors.white}>
+                 {activeCleaningSession?.reportId === selected.id 
+                   ? "Continuer le nettoyage" 
+                   : "Nettoyer cette zone"}
+               </Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : null}
     </View>
@@ -412,6 +429,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
+
   },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   badgeUrgency: {
@@ -439,8 +457,10 @@ const styles = StyleSheet.create({
   },
   metricCardPrimary: { backgroundColor: 'rgba(16, 185, 129, 0.08)' },
   mainActionBtn: {
-    backgroundColor: colors.textDark, borderRadius: 28,
-    height: 56, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: colors.primary, borderRadius: 24,
+    height: 48, justifyContent: 'center', alignItems: 'center',
+    flexDirection: 'row',
+    width:'45%'
   },
 });
 

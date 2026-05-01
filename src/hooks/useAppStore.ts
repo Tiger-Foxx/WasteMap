@@ -21,6 +21,14 @@ import {
 
 // ─── Types du store ─────────────────────────────────────────
 
+export interface CleaningSession {
+  reportId: string;
+  step: 'avant' | 'pendant' | 'apres';
+  mediaAvant?: string | null;
+  mediaPendant?: string | null;
+  mediaApres?: string | null;
+}
+
 interface AppState {
   // Authentification
   isAuthenticated: boolean;
@@ -39,6 +47,9 @@ interface AppState {
   notifications: AppNotification[];
   collectionPoints: CollectionPoint[];
 
+  // Session persistante
+  activeCleaningSession: CleaningSession | null;
+
   // UI state
   isLoading: boolean;
 
@@ -51,6 +62,8 @@ interface AppState {
   addReport: (report: Omit<WasteReport, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'ecoPointsEarned' | 'confirmationCount' | 'isDuplicate'>) => Promise<WasteReport>;
 
   // Actions — Nettoyage
+  setActiveCleaningSession: (session: CleaningSession | null) => void;
+  updateCleaningSession: (updates: Partial<CleaningSession>) => void;
   addCleaningAction: (action: Omit<CleaningAction, 'id' | 'createdAt' | 'status' | 'ecoPointsEarned' | 'validation' | 'validatedAt'>) => Promise<CleaningAction>;
 
   // Actions — Récompenses
@@ -86,6 +99,7 @@ export const useAppStore = create<AppState>()(
       quarterRankings: MOCK_QUARTER_RANKINGS,
       notifications: MOCK_NOTIFICATIONS,
       collectionPoints: MOCK_COLLECTION_POINTS,
+      activeCleaningSession: null,
       isLoading: false,
 
       // ── Auth ────────────────────────────────────────────────
@@ -102,7 +116,7 @@ export const useAppStore = create<AppState>()(
       },
 
       logout: () => {
-        set({ isAuthenticated: false, user: null });
+        set({ isAuthenticated: false, user: null, activeCleaningSession: null });
       },
 
       completeOnboarding: () => {
@@ -163,6 +177,18 @@ export const useAppStore = create<AppState>()(
 
       // ── Nettoyage ───────────────────────────────────────────
 
+      setActiveCleaningSession: (session) => {
+        set({ activeCleaningSession: session });
+      },
+
+      updateCleaningSession: (updates) => {
+        set((state) => ({
+          activeCleaningSession: state.activeCleaningSession
+            ? { ...state.activeCleaningSession, ...updates }
+            : null,
+        }));
+      },
+
       addCleaningAction: async (actionData) => {
         set({ isLoading: true });
         // Simuler l'analyse vidéo IA anti-fraude (3 secondes)
@@ -199,6 +225,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           cleaningActions: [newAction, ...state.cleaningActions],
           transactions: [newTransaction, ...state.transactions],
+          activeCleaningSession: null, // Clear session upon successful cleaning
           isLoading: false,
           user: state.user ? {
             ...state.user,
@@ -280,7 +307,8 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         isOnboarded: state.isOnboarded,
-        user: state.user
+        user: state.user,
+        activeCleaningSession: state.activeCleaningSession,
       }),
     }
   )

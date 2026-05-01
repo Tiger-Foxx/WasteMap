@@ -22,6 +22,8 @@ import { LeaderboardScreen } from '../screens/main/LeaderboardScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
 import { ScanResultScreen } from '../screens/main/ScanResultScreen';
 import { NotificationsScreen } from '../screens/main/NotificationsScreen';
+import { CleaningActionScreen } from '../screens/main/CleaningActionScreen';
+import { CleaningResultScreen } from '../screens/main/CleaningResultScreen';
 
 // ─── Types de navigation ────────────────────────────────────
 
@@ -45,6 +47,8 @@ export type RootStackParamList = {
   Radar: undefined;
   ScanResult: undefined;
   Notifications: undefined;
+  CleaningAction: { reportId: string };
+  CleaningResult: { reportId: string; mediaAvant?: string | null; mediaApres?: string | null };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -225,9 +229,17 @@ const MainNavigator = () => (
           <ScanResultScreen
             onClose={() => navigation.goBack()}
             onConfirm={() => navigation.goBack()}
+            onCleanNow={() => {
+              navigation.goBack();
+              setTimeout(() => {
+                navigation.navigate('CleaningAction', { reportId: 'new_report' });
+              }, 100);
+            }}
           />
         )}
       </RootStack.Screen>
+      <RootStack.Screen name="CleaningAction" component={CleaningActionScreen} />
+      <RootStack.Screen name="CleaningResult" component={CleaningResultScreen} />
     </RootStack.Group>
   </RootStack.Navigator>
 );
