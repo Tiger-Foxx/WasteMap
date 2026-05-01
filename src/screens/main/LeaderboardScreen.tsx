@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity, Image } from 'react-native';
 import { Text, Card } from '../../components';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../theme';
@@ -10,6 +10,11 @@ type TabType = 'users' | 'quarters';
 export const LeaderboardScreen = ({ navigation }: any) => {
   const { leaderboard, quarterRankings, user } = useAppStore();
   const [activeTab, setActiveTab] = useState<TabType>('users');
+
+  const getAvatarUrl = (userId: string, isCurrentUser: boolean) => {
+    if (isCurrentUser) return require('../../../assets/user.png');
+    return { uri: `https://i.pravatar.cc/150?u=${userId}` };
+  };
 
   return (
     <View style={styles.container}>
@@ -22,7 +27,7 @@ export const LeaderboardScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Ionicons name="trophy" size={24} color={colors.white} />
-          <Text variant="xl" weight="bold" color={colors.white}>Classement</Text>
+          <Text variant="xl" weight="bold" color={colors.white}>Leaderboard</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>
@@ -66,7 +71,12 @@ export const LeaderboardScreen = ({ navigation }: any) => {
             <View style={styles.podium}>
               {/* 2ème place */}
               <View style={styles.podiumItem}>
-                  <Ionicons name="medal" size={24} color="#C0C0C0" />
+                <View style={styles.podiumImageContainer}>
+                  <Image source={getAvatarUrl(leaderboard[1]?.userId, !!leaderboard[1]?.isCurrentUser)} style={styles.podiumAvatarImg} />
+                  <View style={[styles.badge, { backgroundColor: '#C0C0C0' }]}>
+                    <Text variant="xs" weight="bold" color="#fff">2</Text>
+                  </View>
+                </View>
                 <Text variant="xs" weight="semiBold" color={colors.textDark} numberOfLines={1}>
                   {leaderboard[1]?.userName.split(' ')[0]}
                 </Text>
@@ -78,8 +88,13 @@ export const LeaderboardScreen = ({ navigation }: any) => {
 
               {/* 1ère place */}
               <View style={styles.podiumItem}>
-                  <Ionicons name="medal" size={32} color="#FFD700" />
-                <Text variant="xs" weight="semiBold" color={colors.textDark} numberOfLines={1}>
+                <View style={styles.podiumImageContainer}>
+                  <Image source={getAvatarUrl(leaderboard[0]?.userId, !!leaderboard[0]?.isCurrentUser)} style={[styles.podiumAvatarImg, { width: 70, height: 70, borderRadius: 35 }]} />
+                  <View style={[styles.badge, { backgroundColor: '#FFD700', width: 24, height: 24, borderRadius: 12, bottom: -4 }]}>
+                    <Text variant="s" weight="bold" color="#fff">1</Text>
+                  </View>
+                </View>
+                <Text variant="xs" weight="semiBold" color={colors.textDark} numberOfLines={1} style={{ marginTop: 4 }}>
                   {leaderboard[0]?.userName.split(' ')[0]}
                 </Text>
                 <Text variant="xs" weight="bold" color={colors.ecoPoint}>
@@ -90,7 +105,12 @@ export const LeaderboardScreen = ({ navigation }: any) => {
 
               {/* 3ème place */}
               <View style={styles.podiumItem}>
-                  <Ionicons name="medal" size={24} color="#CD7F32" />
+                <View style={styles.podiumImageContainer}>
+                  <Image source={getAvatarUrl(leaderboard[2]?.userId, !!leaderboard[2]?.isCurrentUser)} style={styles.podiumAvatarImg} />
+                  <View style={[styles.badge, { backgroundColor: '#CD7F32' }]}>
+                    <Text variant="xs" weight="bold" color="#fff">3</Text>
+                  </View>
+                </View>
                 <Text variant="xs" weight="semiBold" color={colors.textDark} numberOfLines={1}>
                   {leaderboard[2]?.userName.split(' ')[0]}
                 </Text>
@@ -115,9 +135,10 @@ export const LeaderboardScreen = ({ navigation }: any) => {
                   <Text variant="m" weight="bold" color={colors.textLight} style={styles.rankNumber}>
                     #{entry.rank}
                   </Text>
-                  <View style={styles.rankAvatar}>
-                    <Ionicons name={entry.isCurrentUser ? "person" : "person-outline"} size={20} color={colors.primary} />
-                  </View>
+                  <Image 
+                    source={getAvatarUrl(entry.userId, !!entry.isCurrentUser)} 
+                    style={styles.rankAvatarImg} 
+                  />
                   <View style={styles.rankInfo}>
                     <Text variant="s" weight={entry.isCurrentUser ? 'bold' : 'medium'} color={colors.textDark}>
                       {entry.userName} {entry.isCurrentUser ? '(vous)' : ''}
@@ -225,12 +246,31 @@ const styles = StyleSheet.create({
   rankCardCurrent: { borderWidth: 1.5, borderColor: colors.primaryLight },
   rankRow: { flexDirection: 'row', alignItems: 'center' },
   rankNumber: { width: 36 },
-  rankAvatar: {
+  rankAvatarImg: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: colors.primaryLighter,
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    marginRight: 12, borderWidth: 1, borderColor: '#E2E8F0'
   },
   rankInfo: { flex: 1 },
+
+  // New Podium Images
+  podiumImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  podiumAvatarImg: {
+    width: 56, height: 56, borderRadius: 28,
+    borderWidth: 2, borderColor: '#FFFFFF',
+    backgroundColor: '#E2E8F0',
+  },
+  badge: {
+    position: 'absolute', bottom: -6,
+    width: 20, height: 20, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: '#FFFFFF',
+    zIndex: 2,
+  },
 
   // Quarter cards
   quarterCard: { marginBottom: 12 },

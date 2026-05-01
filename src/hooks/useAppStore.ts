@@ -69,6 +69,9 @@ interface AppState {
   // Actions — Récompenses
   redeemReward: (rewardId: string) => Promise<{ success: boolean; message: string }>;
 
+  // Actions — Evénements
+  updateParticipantStatus: (eventId: string, userId: string, newStatus: 'pending' | 'approved' | 'rejected') => void;
+
   // Actions — Notifications
   markNotificationRead: (notificationId: string) => void;
   getUnreadCount: () => number;
@@ -285,6 +288,24 @@ export const useAppStore = create<AppState>()(
         }));
 
         return { success: true, message: `${reward.title} activé avec succès sur votre compte Orange !` };
+      },
+
+      // ── Evénements ──────────────────────────────────────────
+
+      updateParticipantStatus: (eventId: string, userId: string, newStatus: 'pending' | 'approved' | 'rejected') => {
+        set((state) => ({
+          events: state.events.map(event => {
+            if (event.id === eventId) {
+              return {
+                ...event,
+                participants: event.participants.map(p => 
+                  p.userId === userId ? { ...p, status: newStatus } : p
+                )
+              };
+            }
+            return event;
+          })
+        }));
       },
 
       // ── Notifications ───────────────────────────────────────

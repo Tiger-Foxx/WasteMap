@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, StatusBar } from 'react-native';
-import LottieView from 'lottie-react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Animated, Easing, StatusBar, Image, TouchableOpacity } from 'react-native';
 import { Text } from '../components';
 import { colors } from '../theme';
 
@@ -25,40 +24,70 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       // 2. Tagline apparaît
       Animated.timing(taglineFade, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
-      // 3. Pause
-      Animated.delay(1200),
-    ]).start(() => {
-      onFinish();
-    });
+    ]).start();
   }, []);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Lottie Animation */}
-      <Animated.View style={[styles.logoContainer, { opacity: fadeAnim }]}>
-        <LottieView
-          source={require('../../assets/lotties/Recycle-Loader.json')}
-          autoPlay
-          loop
-          style={{ width: 300, height: 300 }}
-        />
-      </Animated.View>
+      {/* Full screen background image */}
+      <Image 
+        source={require('../../assets/illustrations/environment-picture-recycle.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      <View style={styles.overlay} />
 
-      {/* Tagline */}
-      <Animated.View style={[styles.taglineContainer, { opacity: taglineFade }]}>
-        <Text variant="xl" weight="bold" color={colors.textDark} align="center">
-          WasteMap
-        </Text>
-        <View style={styles.taglineLine} />
-        <Text variant="m" color={colors.textMuted} align="center" style={styles.taglineSub}>
-          Ensemble pour des villes propres et durables
-        </Text>
+      {/* Content wrapper */}
+      <View style={styles.content}>
+        {/* App Title Logo */}
+        <Animated.View style={[styles.titleContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
+          <Image 
+            source={require('../../assets/logo-name(le nom wastemap juste en vert)-white.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </Animated.View>
+
+        {/* Tagline */}
+        <Animated.View style={[styles.taglineContainer, { opacity: taglineFade }]}>
+          <Text variant="l" weight="semiBold" color="#FFFFFF" align="center" style={styles.taglineTitle}>
+            Rendez votre ville plus propre
+          </Text>
+          <Text variant="s" color="#E2E8F0" align="center" style={styles.taglineSub}>
+            Signalez les déchets, organisez des collectes et soyez récompensés pour votre impact écologique.
+          </Text>
+
+          {/* Sponsor Section */}
+          <View style={styles.sponsorContainer}>
+            <Text variant="xs" color="rgba(255,255,255,0.7)" style={styles.sponsorText}>
+              Sponsored by
+            </Text>
+            <Image 
+              source={require('../../assets/logo-orange.png')} 
+              style={styles.sponsorLogo}
+              resizeMode="contain"
+            />
+          </View>
+        </Animated.View>
+      </View>
+
+      {/* CTA Button */}
+      <Animated.View style={[styles.footer, { opacity: taglineFade }]}>
+        <TouchableOpacity 
+          style={styles.startBtn} 
+          activeOpacity={0.8}
+          onPress={() => onFinish()}
+        >
+          <Text variant="m" weight="bold" color={colors.textDark}>
+            Commencer
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
     </View>
   );
@@ -67,31 +96,84 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#000000',
   },
-  logoContainer: {
-    alignItems: 'center',
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Slightly darker overlay for better contrast
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+  },
+  titleContainer: {
+    marginBottom: 32,
+  },
+  logoImage: {
+    width: 270,
+    height: 180,
   },
   title: {
-    letterSpacing: 1,
+    fontSize: 48,
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   taglineContainer: {
-    position: 'absolute',
-    bottom: 80,
     alignItems: 'center',
-    paddingHorizontal: 40,
   },
-  taglineLine: {
-    width: 40,
-    height: 3,
-    backgroundColor: colors.primary,
-    borderRadius: 1.5,
-    marginVertical: 12,
+  taglineTitle: {
+    marginBottom: 12,
+    fontSize: 22,
+    lineHeight: 28,
   },
   taglineSub: {
-    lineHeight: 20,
+    lineHeight: 24,
+    maxWidth: '90%',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 40,
+    right: 40,
+    alignItems: 'center',
+  },
+  startBtn: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  sponsorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    gap: 8,
+  },
+  sponsorText: {
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 10,
+  },
+  sponsorLogo: {
+    width: 24,
+    height: 24,
   },
 });

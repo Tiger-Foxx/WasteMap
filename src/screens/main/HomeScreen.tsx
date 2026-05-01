@@ -60,7 +60,16 @@ export const HomeScreen = ({ navigation }: any) => {
       
       <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={styles.scrollContent}>
         
-        {/* ── Header ──────────── */}
+        {/* ── App Logo Header ──────────── */}
+        <Animated.View style={[styles.appLogoContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Image 
+            source={require('../../../assets/logo-name(le nom wastemap juste en vert).png')} 
+            style={styles.mainAppLogo}
+            resizeMode="contain"
+          />
+        </Animated.View>
+
+        {/* ── User Header ──────────── */}
         <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
@@ -284,6 +293,20 @@ export const HomeScreen = ({ navigation }: any) => {
         </Animated.View>
 
       </ScrollView>
+
+      {/* ── FAB Scan Rapide ──────────── */}
+      <Animated.View style={[styles.fabContainer, { opacity: fadeAnim }]}>
+        <TouchableOpacity 
+          style={styles.fab} 
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Radar')}
+        >
+          <View style={styles.fabInner}>
+            <Ionicons name="scan" size={26} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+
     </View>
   );
 };
@@ -294,8 +317,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAF8',
   },
   scrollContent: {
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 140, // Espace pour la bottom bar
+  },
+  appLogoContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  mainAppLogo: {
+    width: 140,
+    height: 40,
   },
   header: {
     flexDirection: 'row',
@@ -481,4 +512,23 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: spacing.borderRadius.round,
   },
+  // FAB Styles
+  fabContainer: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    zIndex: 999,
+  },
+  fab: {
+    backgroundColor: colors.primary,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabInner: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

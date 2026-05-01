@@ -56,6 +56,15 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
+      {/* Top Logo */}
+      <View style={styles.topLogoContainer}>
+        <Image 
+          source={require('../../assets/logo-name(le nom wastemap juste en vert).png')} 
+          style={styles.topLogo}
+          resizeMode="contain"
+        />
+      </View>
+
       <FlatList
         ref={flatListRef}
         data={SLIDES}
@@ -145,11 +154,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  topLogoContainer: {
+    position: 'absolute',
+    top: 50,
+    width: '100%',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  topLogo: {
+    width: 120,
+    height: 36,
+  },
   slide: {
     width,
     height,
     alignItems: 'center',
-    paddingTop: height * 0.15, 
+    paddingTop: height * 0.18, 
   },
   imageWrapper: {
     width: width * 0.85,

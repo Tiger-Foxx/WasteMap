@@ -292,6 +292,7 @@ export interface EventParticipant {
   userName: string;
   avatarUrl?: string;
   joinedAt: string;
+  status: 'pending' | 'approved' | 'rejected';
   ecoPointsEarned: number;     // Part individuelle des points
 }
 

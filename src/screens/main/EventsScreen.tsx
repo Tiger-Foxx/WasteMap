@@ -1,25 +1,26 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Text, Card, Button } from '../../components';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity, Image, Dimensions, Share } from 'react-native';
+import { Text } from '../../components';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '../../theme';
+import { colors } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
 import { EventStatus } from '../../models';
-import LottieView from 'lottie-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-const statusConfig: Record<EventStatus, { label: string; iconName: keyof typeof Ionicons.glyphMap; color: string }> = {
-  planned: { label: 'À venir', iconName: 'calendar', color: colors.primary },
-  active: { label: 'En cours', iconName: 'radio-button-on', color: '#F59E0B' },
-  completed: { label: 'Terminé', iconName: 'checkmark-circle', color: '#10B981' },
-  cancelled: { label: 'Annulé', iconName: 'close-circle', color: '#EF4444' },
+const statusConfig: Record<EventStatus, { label: string; iconName: keyof typeof Ionicons.glyphMap; color: string; bgColor: string }> = {
+  planned: { label: 'À venir', iconName: 'calendar', color: colors.primary, bgColor: '#ECFDF5' },
+  active: { label: 'En cours', iconName: 'radio-button-on', color: '#F59E0B', bgColor: '#FEF3C7' },
+  completed: { label: 'Terminé', iconName: 'checkmark-circle', color: '#10B981', bgColor: '#ECFDF5' },
+  cancelled: { label: 'Annulé', iconName: 'close-circle', color: '#EF4444', bgColor: '#FEE2E2' },
 };
 
 export const EventsScreen = ({ navigation }: any) => {
   const { events, user } = useAppStore();
   const insets = useSafeAreaInsets();
+  // Set to mock local state for the joined visualization
+  const [localJoined, setLocalJoined] = useState<Record<string, boolean>>({});
 
   const formatDateShort = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -31,155 +32,186 @@ export const EventsScreen = ({ navigation }: any) => {
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleShare = async (title: string, dateStr: string) => {
+    try {
+      await Share.share({
+        message: `Hé ! Rejoins-moi pour l'événement de nettoyage "${title}" le ${formatDateShort(dateStr)}. Connecte-toi sur WasteMap, on partagera des EcoPoints ensemble 🌱 !`,
+      });
+    } catch (error) {
+      console.log('Share error:', error);
+    }
+  };
+
+  const toggleJoin = (eventId: string, initiallyJoined: boolean) => {
+    setLocalJoined(prev => ({
+      ...prev,
+      [eventId]: prev[eventId] !== undefined ? !prev[eventId] : !initiallyJoined
+    }));
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Modern Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.textDark} />
-        </TouchableOpacity>
-        <Text variant="l" weight="bold" color={colors.textDark}>
-          Actions Communes
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
         
-        {/* Hero Section with Illustration */}
-        <View style={styles.heroSection}>
-          <View style={styles.heroTextContainer}>
-            <Text variant="xl" weight="bold" color={colors.textDark} style={styles.heroTitle}>
-              Agissons ensemble pour notre ville
-            </Text>
-            <Text variant="s" color={colors.textMuted} style={styles.heroSubtitle}>
-              Rejoignez des initiatives locales de nettoyage, rencontrez d'autres citoyens engagés et maximisez votre impact environnemental.
-            </Text>
-          </View>
+        {/* Full Hero Section with Image Cover */}
+        <View style={styles.heroWrapper}>
           <Image 
             source={require('../../../assets/illustrations/eco-event.png')} 
-            style={styles.heroImage}
-            resizeMode="contain"
+            style={styles.heroCoverImage}
+            resizeMode="cover"
           />
+          <View style={styles.heroOverlay} />
+          
+          <View style={[styles.heroHeader, { paddingTop: Math.max(insets.top, 20) }]}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <View style={{ width: 40 }} />
+          </View>
+
+          <View style={styles.heroTextContainer}>
+            <Text variant="xxl" weight="bold" color="#FFFFFF" style={styles.heroTitle}>
+              Agissons ensemble pour notre ville
+            </Text>
+            <Text variant="s" color="#E2E8F0" style={styles.heroSubtitle}>
+              Rejoignez des initiatives de nettoyage locales. Invitez vos amis et partagez les EcoPoints de la victoire.
+            </Text>
+          </View>
         </View>
 
         {/* Events List */}
         <View style={styles.listSection}>
-          <Text variant="m" weight="bold" color={colors.textDark} style={styles.sectionTitle}>
-            Prochains événements
-          </Text>
+          <View style={styles.listHeader}>
+            <Text variant="l" weight="bold" color={colors.textDark}>
+              Prochains événements
+            </Text>
+            <TouchableOpacity hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <Text variant="xs" weight="bold" color={colors.primary}>
+                Voir la carte
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          {events.map((event, index) => {
+          {events.map((event) => {
             const config = statusConfig[event.status];
-            const isJoined = event.participants.some(p => p.userId === user?.id);
+            const initiallyJoined = event.participants.some(p => p.userId === user?.id);
+            const isJoined = localJoined[event.id] !== undefined ? localJoined[event.id] : initiallyJoined;
             const spotsLeft = event.maxParticipants ? event.maxParticipants - event.participants.length : null;
 
             return (
-              <View key={event.id}>
-                <View style={styles.modernCard}>
-                  {/* Date & Status Column */}
-                  <View style={styles.dateCol}>
-                    <Text variant="l" weight="bold" color={colors.textDark}>
-                      {new Date(event.scheduledAt).getDate()}
-                    </Text>
-                    <Text variant="xs" weight="medium" color={colors.textMuted} style={{ textTransform: 'uppercase' }}>
-                      {new Date(event.scheduledAt).toLocaleDateString('fr-FR', { month: 'short' })}
+              <View key={event.id} style={styles.flatCard}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.statusBadge, { backgroundColor: config.bgColor }]}>
+                    <Ionicons name={config.iconName} size={14} color={config.color} />
+                    <Text variant="xs" weight="bold" color={config.color} style={{ marginLeft: 4 }}>
+                      {config.label}
                     </Text>
                   </View>
-
-                  {/* Content Column */}
-                  <View style={styles.contentCol}>
-                    <View style={styles.cardHeader}>
-                      <View style={styles.statusBadgeClean}>
-                        <Ionicons name={config.iconName} size={14} color={config.color} />
-                        <Text variant="xs" weight="bold" color={config.color} style={{ marginLeft: 4 }}>
-                          {config.label}
-                        </Text>
-                      </View>
-                      {event.sponsorName && (
-                        <View style={styles.sponsorClean}>
-                          <Ionicons name="briefcase-outline" size={12} color={colors.textMuted} />
-                          <Text variant="xs" weight="medium" color={colors.textMuted} style={{ marginLeft: 4 }}>
-                            {event.sponsorName}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <Text variant="m" weight="bold" color={colors.textDark} style={styles.eventTitle} numberOfLines={2}>
-                      {event.title}
+                  <View style={styles.dateBadge}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+                    <Text variant="xs" weight="bold" color={colors.textMuted} style={{ marginLeft: 4 }}>
+                      {formatDateShort(event.scheduledAt)}
                     </Text>
-
-                    <View style={styles.infoRow}>
-                      <Ionicons name="location-outline" size={16} color={colors.textLight} />
-                      <Text variant="xs" color={colors.textMuted} style={{ marginLeft: 6 }} numberOfLines={1}>
-                        {event.targetLocation.quarter}, {event.targetLocation.city}
-                      </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                      <Ionicons name="time-outline" size={16} color={colors.textLight} />
-                      <Text variant="xs" color={colors.textMuted} style={{ marginLeft: 6 }}>
-                        {formatTime(event.scheduledAt)} • {event.estimatedDurationMinutes} min
-                      </Text>
-                    </View>
-
-                    <View style={styles.footerRow}>
-                      <View style={styles.participantsClean}>
-                        <Ionicons name="people-outline" size={16} color={colors.textMuted} />
-                        <Text variant="xs" weight="medium" color={colors.textMuted} style={{ marginLeft: 6 }}>
-                          {event.participants.length} {spotsLeft ? `/ ${event.maxParticipants}` : ''} inscrits
-                        </Text>
-                      </View>
-                      
-                      {event.status === 'planned' && (
-                        <TouchableOpacity 
-                          style={[styles.joinBtn, isJoined && styles.joinedBtn]} 
-                          activeOpacity={0.8}
-                        >
-                          <Text variant="xs" weight="bold" color={isJoined ? colors.primary : colors.white}>
-                            {isJoined ? 'Inscrit' : 'Participer'}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-
                   </View>
+                </View>
+
+                <Text variant="m" weight="bold" color={colors.textDark} style={styles.eventTitle} numberOfLines={2}>
+                  {event.title}
+                </Text>
+
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoRow}>
+                    <View style={styles.iconBox}>
+                      <Ionicons name="location-outline" size={16} color={colors.textMuted} />
+                    </View>
+                    <Text variant="xs" weight="medium" color={colors.textMuted} style={styles.infoText}>
+                      {event.targetLocation.quarter}, {event.targetLocation.city}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <View style={styles.iconBox}>
+                      <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                    </View>
+                    <Text variant="xs" weight="medium" color={colors.textMuted} style={styles.infoText}>
+                      {formatTime(event.scheduledAt)} ({event.estimatedDurationMinutes} min)
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Team / Spots */}
+                <View style={styles.teamContainer}>
+                  <View style={styles.avatarsRow}>
+                    {[1, 2, 3].map((num) => (
+                      <Image 
+                        key={num} 
+                        source={{ uri: `https://i.pravatar.cc/100?u=event${event.id}${num}` }} 
+                        style={[styles.miniAvatar, { marginLeft: num === 1 ? 0 : -8 }]} 
+                      />
+                    ))}
+                  </View>
+                  <Text variant="xs" weight="medium" color={colors.textMuted} style={{ marginLeft: 8 }}>
+                    {event.participants.length} {spotsLeft ? `/ ${event.maxParticipants}` : ''} participants
+                  </Text>
+                </View>
+
+                {/* Actions */}
+                <View style={styles.actionRow}>
+                  {event.status === 'planned' && ! (event.organizerId === user?.id) && (
+                    <TouchableOpacity 
+                      style={[styles.primaryBtn, isJoined && styles.joinedBtn]} 
+                      activeOpacity={0.8}
+                      onPress={() => toggleJoin(event.id, initiallyJoined)}
+                    >
+                      <Ionicons 
+                        name={isJoined ? "checkmark-circle" : "add-circle-outline"} 
+                        size={18} 
+                        color={isJoined ? colors.primary : colors.white} 
+                      />
+                      <Text variant="s" weight="bold" color={isJoined ? colors.primary : colors.white} style={{ marginLeft: 6 }}>
+                        {isJoined ? 'Inscrit' : "S'inscrire"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {event.organizerId === user?.id && (
+                    <TouchableOpacity 
+                      style={[styles.primaryBtn, { backgroundColor: '#F59E0B' }]} 
+                      activeOpacity={0.8}
+                      onPress={() => navigation.navigate('ManageEvent', { eventId: event.id })}
+                    >
+                      <Ionicons name="people-outline" size={18} color="#FFF" />
+                      <Text variant="s" weight="bold" color="#FFF" style={{ marginLeft: 6 }}>
+                        Gérer
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity 
+                    style={styles.secondaryBtn} 
+                    activeOpacity={0.8}
+                    onPress={() => handleShare(event.title, event.scheduledAt)}
+                  >
+                    <Ionicons name="share-social-outline" size={18} color={colors.textDark} />
+                    <Text variant="s" weight="bold" color={colors.textDark} style={{ marginLeft: 6 }}>
+                      Inviter
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
           })}
         </View>
 
-        {/* Create Event CTA with Lottie */}
-        <View style={styles.ctaContainer}>
-          <View style={styles.lottieContainer}>
-            <LottieView
-              source={require('../../../assets/lotties/Hand holding plant seedling.json')}
-              autoPlay
-              loop
-              style={styles.lottie}
-            />
-          </View>
-          <View style={styles.ctaTextContainer}>
-            <Text variant="m" weight="bold" color={colors.textDark}>
-              Créer votre mouvement
-            </Text>
-            <Text variant="xs" color={colors.textMuted} style={{ marginTop: 4, lineHeight: 18 }}>
-              Prenez l'initiative et organisez une collecte ciblée dans votre quartier.
-            </Text>
-            <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.8}>
-              <Text variant="s" weight="bold" color={colors.textDark}>
-                Proposer une date
-              </Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.textDark} style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
       </ScrollView>
+
+      {/* Floating Action Button for Create Event */}
+      <TouchableOpacity style={styles.fabWrap} activeOpacity={0.9}>
+        <View style={styles.fabBtn}>
+          <Ionicons name="add" size={28} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -187,175 +219,188 @@ export const EventsScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8FAFC',
   },
-  header: {
+  content: {
+    flex: 1,
+  },
+  heroWrapper: {
+    width: '100%',
+    height: 280,
+    position: 'relative',
+  },
+  heroCoverImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5, 30, 15, 0.65)',
+  },
+  heroHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#FAFAFA',
+    zIndex: 10,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  content: {
-    flex: 1,
-  },
-  heroSection: {
-    marginTop: 10,
-    marginHorizontal: 20,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 24,
-    padding: 24,
-    paddingBottom: 0,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   heroTextContainer: {
-    marginBottom: 20,
-    zIndex: 2,
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    zIndex: 10,
   },
   heroTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 26,
+    lineHeight: 32,
+    marginBottom: 8,
   },
   heroSubtitle: {
-    marginTop: 8,
     lineHeight: 20,
   },
-  heroImage: {
-    width: width * 0.7,
-    height: 140,
-    alignSelf: 'flex-end',
-    marginRight: -20,
-    marginBottom: -10,
-  },
   listSection: {
-    marginTop: 32,
+    marginTop: -20,
     paddingHorizontal: 20,
+    paddingTop: 30,
+    backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  sectionTitle: {
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  modernCard: {
+  listHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  flatCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginBottom: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  dateCol: {
-    width: 50,
-    alignItems: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#F1F5F9',
-    paddingRight: 16,
-    marginRight: 16,
-    paddingTop: 4,
-  },
-  contentCol: {
-    flex: 1,
+    padding: 20,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  statusBadgeClean: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
-  sponsorClean: {
+  dateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   eventTitle: {
-    fontSize: 16,
-    marginBottom: 12,
-    lineHeight: 22,
+    fontSize: 18,
+    marginBottom: 16,
+    lineHeight: 24,
+  },
+  infoGrid: {
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  footerRow: {
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  infoText: {
+    flex: 1,
+    paddingTop: 2,
+  },
+  teamContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  avatarsRow: {
+    flexDirection: 'row',
+  },
+  miniAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
   },
-  participantsClean: {
+  primaryBtn: {
+    flex: 1,
     flexDirection: 'row',
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  joinBtn: {
-    backgroundColor: colors.textDark,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
+    marginRight: 12,
   },
   joinedBtn: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  ctaContainer: {
+  secondaryBtn: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 24,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  lottieContainer: {
-    width: 70,
-    height: 70,
-    marginRight: 16,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 35,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 12,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  lottie: {
-    width: 80,
-    height: 80,
+  fabWrap: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
   },
-  ctaTextContainer: {
-    flex: 1,
-  },
-  ctaBtn: {
-    flexDirection: 'row',
+  fabBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });

@@ -20,6 +20,7 @@ import { RewardsScreen } from '../screens/main/RewardsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { LeaderboardScreen } from '../screens/main/LeaderboardScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
+import { ManageEventScreen } from '../screens/main/ManageEventScreen';
 import { ScanResultScreen } from '../screens/main/ScanResultScreen';
 import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { CleaningActionScreen } from '../screens/main/CleaningActionScreen';
@@ -44,6 +45,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Leaderboard: undefined;
   Events: undefined;
+  ManageEvent: { eventId: string };
   Radar: undefined;
   ScanResult: undefined;
   Notifications: undefined;
@@ -220,6 +222,7 @@ const MainNavigator = () => (
     <RootStack.Group screenOptions={{ presentation: 'modal' }}>
       <RootStack.Screen name="Leaderboard" component={LeaderboardScreen} />
       <RootStack.Screen name="Events" component={EventsScreen} />
+      <RootStack.Screen name="ManageEvent" component={ManageEventScreen} />
       <RootStack.Screen name="Notifications" component={NotificationsScreen} />
     </RootStack.Group>
     <RootStack.Group screenOptions={{ presentation: 'fullScreenModal' }}>
