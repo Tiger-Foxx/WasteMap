@@ -189,7 +189,8 @@ export const MapScreen = ({ navigation }: any) => {
         <div id="map"></div>
         <script>
           var map = L.map('map', {zoomControl: false}).setView([${YAOUNDE_REGION.latitude}, ${YAOUNDE_REGION.longitude}], 13);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          /* Utilisation de CARTO Positron : très élégant, moins saturé que Voyager, parfait pour mettre en valeur les données sans piquer les yeux */
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19
           }).addTo(map);
           ${markersJS}
