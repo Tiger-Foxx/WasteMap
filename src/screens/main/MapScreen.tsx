@@ -111,7 +111,7 @@ export const MapScreen = ({ navigation }: any) => {
         style={styles.map}
         provider={PROVIDER_DEFAULT}
         initialRegion={YAOUNDE_REGION}
-        showsUserLocation
+        showsUserLocation={false} 
         showsMyLocationButton={false}
         mapPadding={{ top: insets.top + 100, right: 0, bottom: 0, left: 0 }}
       >

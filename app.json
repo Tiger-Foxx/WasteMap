@@ -22,7 +22,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.wastemap.app"
+      "package": "com.wastemap.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA_METTRE_VOTRE_VRAIE_CLE_Ici_zX8M"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
