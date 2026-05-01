@@ -58,7 +58,7 @@ const TAB_ICON_SIZE = 44;
 
 const TAB_BAR_COLOR = '#000000ff'; // Exact same as EcoPoints card
 
-const TabIcon = ({ iconName, focused }: { iconName: keyof typeof Ionicons.glyphMap; focused: boolean }) => {
+const TabIcon = ({ iconName, focused, activeColor = colors.primary }: { iconName: keyof typeof Ionicons.glyphMap; focused: boolean; activeColor?: string }) => {
   const animValue = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
@@ -66,7 +66,7 @@ const TabIcon = ({ iconName, focused }: { iconName: keyof typeof Ionicons.glyphM
       toValue: focused ? 1 : 0,
       friction: 6,
       tension: 60,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [focused]);
 
@@ -80,11 +80,15 @@ const TabIcon = ({ iconName, focused }: { iconName: keyof typeof Ionicons.glyphM
     outputRange: [0, -10],
   });
 
+  const backgroundColor = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['transparent', activeColor],
+  });
+
   return (
     <Animated.View style={[
       tabStyles.pill, 
-      focused && tabStyles.pillActive,
-      { transform: [{ scale }, { translateY }] }
+      { transform: [{ scale }, { translateY }], backgroundColor }
     ]}>
       <Ionicons name={iconName} size={24} color={focused ? '#FFFFFF' : '#64748B'} />
     </Animated.View>
@@ -98,9 +102,6 @@ const tabStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  pillActive: {
-    backgroundColor: colors.primary,
   },
 });
 
@@ -196,7 +197,7 @@ const MainTabs = () => {
     <Tab.Screen
       name="Rewards"
       component={RewardsScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'gift' : 'gift-outline'} focused={focused} /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'gift' : 'gift-outline'} focused={focused} activeColor="#FF7900" /> }}
     />
     <Tab.Screen
       name="Profile"
