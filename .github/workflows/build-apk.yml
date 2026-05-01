@@ -1,6 +1,9 @@
 name: Build Android APK
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Garde-le pour pouvoir lancer manuellement
+  push:
+    tags:
+      - 'v*' # C'est CA qui déclenche la magie au "git push origin v1.0.0"
 
 jobs:
   build:
