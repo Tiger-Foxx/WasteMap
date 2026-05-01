@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, StyleSheet, Animated, Easing, StatusBar,
-  TouchableOpacity, Dimensions,
+  TouchableOpacity, Dimensions, ScrollView, Image
 } from 'react-native';
-import { Text, Card, Button } from '../../components';
-import { colors, spacing } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Text } from '../../components';
+import { colors } from '../../theme';
 import { WasteAnalysis } from '../../models';
+import LottieView from 'lottie-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -17,9 +19,9 @@ interface ScanResultScreenProps {
 // Résultat simulé
 const MOCK_RESULT: WasteAnalysis = {
   composition: [
-    { type: 'plastic', percentage: 72, label: 'Plastique PET (bouteilles, sachets)' },
-    { type: 'metal', percentage: 12, label: 'Métal aluminium (canettes)' },
-    { type: 'organic', percentage: 16, label: 'Déchets organiques' },
+    { type: 'plastic', percentage: 72, label: 'Plastique PET' },
+    { type: 'metal', percentage: 12, label: 'Métal aluminium' },
+    { type: 'organic', percentage: 16, label: 'Organique' },
   ],
   estimatedVolumeM3: 2.4,
   estimatedWeightKg: 35,
@@ -28,411 +30,310 @@ const MOCK_RESULT: WasteAnalysis = {
 };
 
 export const ScanResultScreen = ({ onClose, onConfirm }: ScanResultScreenProps) => {
-  // ── State ──
-  const [phase, setPhase] = useState<'scanning' | 'results' | 'success'>('scanning');
-  const [scanProgress, setScanProgress] = useState(0);
+  const [phase, setPhase] = useState<'results' | 'success'>('results');
 
-  // ── Animations ──
-  const scanLineAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Animations
   const fadeIn = useRef(new Animated.Value(0)).current;
   const barAnims = useRef(MOCK_RESULT.composition.map(() => new Animated.Value(0))).current;
-  const volumeAnim = useRef(new Animated.Value(0)).current;
-  const successScale = useRef(new Animated.Value(0)).current;
-  const confettiAnim = useRef(new Animated.Value(0)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
 
-  // ── Phase 1: Scanning ──
+  const [displayPoints, setDisplayPoints] = useState(0);
+
   useEffect(() => {
-    // Ligne de scan qui monte/descend
-    const scanLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scanLineAnim, {
-          toValue: 1, duration: 1500, useNativeDriver: true, easing: Easing.inOut(Easing.ease),
-        }),
-        Animated.timing(scanLineAnim, {
-          toValue: 0, duration: 1500, useNativeDriver: true, easing: Easing.inOut(Easing.ease),
-        }),
-      ])
-    );
-    scanLoop.start();
-
-    // Pulse sur le cadre
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05, duration: 800, useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1, duration: 800, useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseLoop.start();
-
-    // Progression du scan
-    const progressInterval = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          scanLoop.stop();
-          pulseLoop.stop();
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 60);
-
-    return () => {
-      clearInterval(progressInterval);
-      scanLoop.stop();
-      pulseLoop.stop();
-    };
-  }, []);
-
-  // Quand le scan atteint 100%, passer à la phase résultats
-  useEffect(() => {
-    if (scanProgress >= 100 && phase === 'scanning') {
-      setTimeout(() => {
-        setPhase('results');
-        animateResults();
-      }, 400);
-    }
-  }, [scanProgress, phase]);
-
-  // ── Phase 2: Résultats animés ──
-  const animateResults = () => {
-    // Fade in des résultats
     Animated.timing(fadeIn, {
       toValue: 1, duration: 400, useNativeDriver: true,
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.out(Easing.ease),
     }).start();
 
-    // Barres de composition avec stagger
-    Animated.stagger(200,
+    Animated.stagger(100,
       barAnims.map((anim, i) =>
         Animated.timing(anim, {
           toValue: MOCK_RESULT.composition[i].percentage,
-          duration: 800,
+          duration: 600,
           useNativeDriver: false,
-          easing: Easing.out(Easing.cubic),
+          easing: Easing.out(Easing.ease),
         })
       )
     ).start();
+  }, []);
 
-    // Volume animé
-    Animated.timing(volumeAnim, {
-      toValue: MOCK_RESULT.estimatedVolumeM3,
-      duration: 1000, useNativeDriver: false,
-      easing: Easing.out(Easing.cubic),
-    }).start();
-  };
-
-  // ── Phase 3: Succès ──
   const handleConfirm = () => {
     setPhase('success');
 
-    Animated.parallel([
-      Animated.spring(successScale, {
-        toValue: 1, friction: 4, tension: 40, useNativeDriver: true,
-      }),
-      Animated.timing(confettiAnim, {
-        toValue: 1, duration: 800, useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setTimeout(() => onConfirm(MOCK_RESULT), 1500);
+    const targetPoints = Math.floor(MOCK_RESULT.estimatedVolumeM3 * 50);
+
+    Animated.timing(successOpacity, {
+      toValue: 1, duration: 400, useNativeDriver: true, easing: Easing.out(Easing.ease)
+    }).start(() => {
+      // Animate the points counter
+      let start = 0;
+      const duration = 1500;
+      const intervalTime = 30;
+      const steps = duration / intervalTime;
+      const increment = targetPoints / steps;
+
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= targetPoints) {
+          setDisplayPoints(targetPoints);
+          clearInterval(timer);
+        } else {
+          setDisplayPoints(Math.floor(start));
+        }
+      }, intervalTime);
+
+      // Delay exit to let user enjoy the screen
+      setTimeout(() => onConfirm(MOCK_RESULT), 5000);
     });
   };
 
-  // ── Render: Phase Scanning ──
-  if (phase === 'scanning') {
-    return (
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" />
-        <View style={styles.scanContainer}>
-          {/* Header */}
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <Text variant="l" color={colors.white}>✕</Text>
-          </TouchableOpacity>
-
-          <Text variant="l" weight="bold" color={colors.white} align="center" style={{ marginTop: 60 }}>
-            🤖 Analyse IA en cours...
-          </Text>
-
-          {/* Image placeholder avec scan */}
-          <Animated.View style={[styles.scanFrame, { transform: [{ scale: pulseAnim }] }]}>
-            {/* Corners */}
-            <View style={[styles.scanCorner, styles.cTL]} />
-            <View style={[styles.scanCorner, styles.cTR]} />
-            <View style={[styles.scanCorner, styles.cBL]} />
-            <View style={[styles.scanCorner, styles.cBR]} />
-
-            {/* Ligne de scan animée */}
-            <Animated.View style={[
-              styles.scanLine,
-              {
-                transform: [{
-                  translateY: scanLineAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 200],
-                  }),
-                }],
-              },
-            ]} />
-
-            <Text style={{ fontSize: 64 }}>📸</Text>
-          </Animated.View>
-
-          {/* Barre de progression */}
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${scanProgress}%` }]} />
-            </View>
-            <Text variant="s" weight="semiBold" color={colors.white} align="center" style={{ marginTop: 8 }}>
-              {scanProgress}%
-            </Text>
-            <Text variant="xs" color="rgba(255,255,255,0.6)" align="center" style={{ marginTop: 4 }}>
-              {scanProgress < 30 ? 'Détection des contours...' :
-               scanProgress < 60 ? 'Classification des matériaux...' :
-               scanProgress < 85 ? 'Estimation du volume...' :
-               'Calcul de la gravité...'}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Render: Phase Success ──
+  // ════════════════════════════════════════════════════════════
+  // PHASE: SUCCESS (Ultra minimal + Lottie)
+  // ════════════════════════════════════════════════════════════
   if (phase === 'success') {
     return (
-      <View style={[styles.container, { backgroundColor: colors.primary }]}>
-        <StatusBar barStyle="light-content" />
-        <Animated.View style={[styles.successContainer, { transform: [{ scale: successScale }] }]}>
-          <View style={styles.successCircle}>
-            <Text style={{ fontSize: 56 }}>🎉</Text>
-          </View>
-          <Text variant="xxl" weight="bold" color={colors.white} align="center" style={{ marginTop: 24 }}>
-            Signalement envoyé !
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }]}>
+        <StatusBar barStyle="dark-content" />
+        <Animated.View style={[styles.successContainer, { opacity: successOpacity }]}>
+          
+          {/* Main Trophy Animation */}
+          <LottieView
+            source={require('../../../assets/lotties/Trophy-animated.json')}
+            autoPlay
+            loop={false}
+            style={{ width: 250, height: 250, alignSelf: 'center' }}
+          />
+
+          <Text variant="xl" weight="bold" color={colors.textDark} align="center" style={{ marginTop: 16 }}>
+            Signalement Validé
           </Text>
-          <Text variant="m" color="rgba(255,255,255,0.8)" align="center" style={{ marginTop: 12, lineHeight: 24 }}>
-            Votre signalement a été ajouté à la carte.{'\n'}Merci pour votre contribution !
+          <Text variant="m" color={colors.textMuted} align="center" style={{ marginTop: 8, lineHeight: 24, paddingHorizontal: 40 }}>
+            Bravo ! Votre contribution aide à préserver notre écosystème.
           </Text>
-          <View style={styles.pointsEarned}>
-            <Text variant="xxxl" weight="bold" color={colors.white}>
-              +{Math.floor(MOCK_RESULT.estimatedVolumeM3 * 50)}
+          
+          {/* Animated EcoPoints with small plant Lottie */}
+          <View style={[styles.pointsEarnedFlat, { marginTop: 32 }]}>
+            <LottieView
+              source={require('../../../assets/lotties/Hand holding plant seedling.json')}
+              autoPlay
+              loop
+              style={{ width: 40, height: 40, marginRight: 8, marginLeft: -10 }}
+            />
+            <Text variant="xxxl" weight="bold" color={colors.primary}>
+              +{displayPoints}
             </Text>
-            <Text variant="m" color="rgba(255,255,255,0.7)"> EcoPoints 🌿</Text>
+            <Text variant="m" weight="semiBold" color={colors.primary} style={{ marginLeft: 8 }}>EcoPoints</Text>
           </View>
+
         </Animated.View>
       </View>
     );
   }
 
-  // ── Render: Phase Results ──
-  const gravityConfig = {
-    low: { label: 'Faible', color: '#4CAF50', bg: '#E8F5E9' },
-    medium: { label: 'Moyen', color: '#FF9800', bg: '#FFF3E0' },
-    high: { label: 'Élevé', color: '#F44336', bg: '#FFEBEE' },
-    critical: { label: 'Critique', color: '#9C27B0', bg: '#F3E5F5' },
-  };
-  const gc = gravityConfig[MOCK_RESULT.gravity];
-
+  // ════════════════════════════════════════════════════════════
+  // PHASE: RESULTS (Flat Design, Monochrome + Primary Color)
+  // ════════════════════════════════════════════════════════════
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <Animated.View style={[styles.resultsContainer, { opacity: fadeIn }]}>
-        {/* Header */}
-        <View style={styles.resultsHeader}>
-          <TouchableOpacity style={styles.closeBtnDark} onPress={onClose}>
-            <Text variant="l" color={colors.textDark}>←</Text>
+        
+        {/* Header - Flat */}
+        <View style={styles.headerFlat}>
+          <TouchableOpacity style={styles.backBtnFlat} onPress={onClose}>
+            <Ionicons name="arrow-back" size={24} color={colors.textDark} />
           </TouchableOpacity>
-          <Text variant="l" weight="bold" color={colors.textDark}>Résultat de l'analyse</Text>
+          <Text variant="l" weight="bold" color={colors.textDark}>Analyse IA</Text>
           <View style={{ width: 44 }} />
         </View>
 
-        {/* Gravity badge */}
-        <View style={[styles.gravityBadge, { backgroundColor: gc.bg }]}>
-          <View style={[styles.gravityDot, { backgroundColor: gc.color }]} />
-          <Text variant="s" weight="semiBold" color={gc.color}>
-            Gravité : {gc.label}
-          </Text>
-          <Text variant="xs" color={gc.color} style={{ marginLeft: 8 }}>
-            ({Math.round(MOCK_RESULT.confidence * 100)}% confiance)
-          </Text>
-        </View>
-
-        {/* Composition avec barres animées */}
-        <Card variant="elevated" style={styles.compositionCard}>
-          <Text variant="m" weight="semiBold" color={colors.textDark} style={{ marginBottom: 16 }}>
-            🔬 Composition détectée
-          </Text>
-          {MOCK_RESULT.composition.map((comp, i) => (
-            <View key={comp.type} style={styles.barRow}>
-              <View style={styles.barLabel}>
-                <Text style={{ fontSize: 16 }}>
-                  {comp.type === 'plastic' ? '🧴' : comp.type === 'metal' ? '🥫' : '🍂'}
-                </Text>
-                <Text variant="s" weight="medium" color={colors.textDark} style={{ marginLeft: 8 }}>
-                  {comp.label.split('(')[0].trim()}
-                </Text>
-              </View>
-              <View style={styles.barTrack}>
-                <Animated.View style={[
-                  styles.barFill,
-                  {
-                    width: barAnims[i].interpolate({
-                      inputRange: [0, 100],
-                      outputRange: ['0%', '100%'],
-                    }),
-                    backgroundColor: i === 0 ? '#2196F3' : i === 1 ? '#FF9800' : '#4CAF50',
-                  },
-                ]} />
-              </View>
-              <Animated.Text style={styles.barPercent}>
-                {comp.percentage}%
-              </Animated.Text>
+        <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+          
+          {/* AI Confidence / Gravity (Strictly flat, no background blocks, just text/icons) */}
+          <View style={styles.metaHeader}>
+            <LottieView
+              source={require('../../../assets/lotties/Location Lottie Animation.json')}
+              autoPlay
+              loop
+              style={{ width: 60, height: 60, marginLeft: -10 }}
+            />
+            <View>
+              <Text variant="xl" weight="bold" color={colors.textDark}>
+                Gravité Élevée
+              </Text>
+              <Text variant="s" color={colors.textMuted} style={{ marginTop: 2 }}>
+                Fiabilité IA : {Math.round(MOCK_RESULT.confidence * 100)}%
+              </Text>
             </View>
-          ))}
-        </Card>
+          </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <Card variant="elevated" style={styles.statBox}>
-            <Text style={{ fontSize: 24 }}>📦</Text>
-            <Text variant="l" weight="bold" color={colors.textDark} style={{ marginTop: 4 }}>
-              {MOCK_RESULT.estimatedVolumeM3} m³
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Estimations (Flat grid) */}
+          <View style={styles.metricsGrid}>
+            <View style={styles.metricItem}>
+              <Text variant="s" color={colors.textMuted}>Volume</Text>
+              <Text variant="xl" weight="bold" color={colors.textDark} style={{ marginTop: 4 }}>
+                {MOCK_RESULT.estimatedVolumeM3} <Text variant="m" color={colors.textMuted}>m³</Text>
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text variant="s" color={colors.textMuted}>Poids</Text>
+              <Text variant="xl" weight="bold" color={colors.textDark} style={{ marginTop: 4 }}>
+                {MOCK_RESULT.estimatedWeightKg} <Text variant="m" color={colors.textMuted}>kg</Text>
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text variant="s" color={colors.textMuted}>Gain</Text>
+              <Text variant="xl" weight="bold" color={colors.primary} style={{ marginTop: 4 }}>
+                +{Math.floor(MOCK_RESULT.estimatedVolumeM3 * 50)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Composition (Flat bars, monochrome fill) */}
+          <View style={styles.compositionSection}>
+            <Image 
+              source={require('../../../assets/illustrations/dechets-tas.png')} 
+              style={{ width: 140, height: 120, alignSelf: 'center', marginBottom: 16 }} 
+              resizeMode="contain" 
+            />
+            
+            <Text variant="m" weight="bold" color={colors.textDark} style={{ marginBottom: 24 }}>
+              Composition détaillée
             </Text>
-            <Text variant="xs" color={colors.textLight}>Volume estimé</Text>
-          </Card>
-          <Card variant="elevated" style={styles.statBox}>
-            <Text style={{ fontSize: 24 }}>⚖️</Text>
-            <Text variant="l" weight="bold" color={colors.textDark} style={{ marginTop: 4 }}>
-              {MOCK_RESULT.estimatedWeightKg} kg
+            
+            {MOCK_RESULT.composition.map((comp, i) => (
+              <View key={comp.type} style={styles.flatBarRow}>
+                <View style={styles.flatBarLabelContainer}>
+                  <Text variant="s" weight="semiBold" color={colors.textDark}>
+                    {comp.label}
+                  </Text>
+                  <Text variant="s" weight="bold" color={colors.textDark}>
+                    {comp.percentage}%
+                  </Text>
+                </View>
+                
+                <View style={styles.flatBarTrack}>
+                  <Animated.View style={[
+                    styles.flatBarFill,
+                    {
+                      width: barAnims[i].interpolate({
+                        inputRange: [0, 100],
+                        outputRange: ['0%', '100%'],
+                      }),
+                      // Strict minimalism: Use primary color for the highest percentage, else neutral grey.
+                      backgroundColor: i === 0 ? colors.textDark : '#E2E8F0',
+                    },
+                  ]} />
+                </View>
+              </View>
+            ))}
+          </View>
+
+        </ScrollView>
+
+        {/* Actions Bottom (Flat, full width buttons) */}
+        <View style={styles.actionsFlat}>
+          <TouchableOpacity style={styles.btnPrimaryFlat} onPress={handleConfirm} activeOpacity={0.9}>
+            <Text variant="m" weight="bold" color="#FFFFFF">
+              Confirmer
             </Text>
-            <Text variant="xs" color={colors.textLight}>Poids estimé</Text>
-          </Card>
-          <Card variant="elevated" style={styles.statBox}>
-            <Text style={{ fontSize: 24 }}>🌿</Text>
-            <Text variant="l" weight="bold" color={colors.ecoPoint} style={{ marginTop: 4 }}>
-              +{Math.floor(MOCK_RESULT.estimatedVolumeM3 * 50)}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btnSecondaryFlat} onPress={onClose} activeOpacity={0.7}>
+            <Text variant="m" weight="semiBold" color={colors.textDark}>
+              Annuler
             </Text>
-            <Text variant="xs" color={colors.textLight}>EcoPoints</Text>
-          </Card>
+          </TouchableOpacity>
         </View>
 
-        {/* Actions */}
-        <View style={styles.actionsContainer}>
-          <Button
-            title="Confirmer le signalement 📍"
-            onPress={handleConfirm}
-            size="large"
-          />
-          <Button
-            title="Reprendre la photo"
-            onPress={onClose}
-            variant="ghost"
-            size="medium"
-            style={{ marginTop: 8 }}
-          />
-        </View>
       </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
 
-  // ── Scanning phase ──
-  scanContainer: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.screenPadding },
-  closeBtn: {
-    position: 'absolute', top: 56, right: spacing.screenPadding,
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center', zIndex: 10,
+  // ── Results Phase ──
+  resultsContainer: { flex: 1 },
+  headerFlat: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
   },
-  scanFrame: {
-    width: 260, height: 260, marginTop: 40,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(78,159,61,0.3)',
-    borderRadius: spacing.borderRadius.medium,
-    overflow: 'hidden',
+  backBtnFlat: {
+    width: 44, height: 44,
+    justifyContent: 'center', alignItems: 'flex-start',
   },
-  scanCorner: {
-    position: 'absolute', width: 30, height: 30,
-    borderColor: colors.primaryLight, borderWidth: 3,
+  scrollArea: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
-  cTL: { top: -1, left: -1, borderRightWidth: 0, borderBottomWidth: 0 },
-  cTR: { top: -1, right: -1, borderLeftWidth: 0, borderBottomWidth: 0 },
-  cBL: { bottom: -1, left: -1, borderRightWidth: 0, borderTopWidth: 0 },
-  cBR: { bottom: -1, right: -1, borderLeftWidth: 0, borderTopWidth: 0 },
-  scanLine: {
-    position: 'absolute', left: 10, right: 10, height: 2,
-    backgroundColor: colors.primaryLight, top: 20,
-    shadowColor: colors.primaryLight, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1, shadowRadius: 8,
+  metaHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: 10, marginBottom: 10,
   },
-  progressContainer: { marginTop: 40, width: '100%', paddingHorizontal: 20 },
-  progressBar: {
-    width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)',
+  divider: {
+    height: 1, backgroundColor: '#F1F5F9',
+    marginVertical: 24,
+  },
+  metricsGrid: {
+    flexDirection: 'row', justifyContent: 'space-between',
+  },
+  metricItem: {
+    flex: 1,
+  },
+  compositionSection: {
+    marginBottom: 20,
+  },
+  flatBarRow: {
+    marginBottom: 24,
+  },
+  flatBarLabelContainer: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 8,
+  },
+  flatBarTrack: {
+    width: '100%', height: 6,
+    backgroundColor: '#F8FAFC',
     borderRadius: 3, overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%', backgroundColor: colors.primaryLight, borderRadius: 3,
+  flatBarFill: {
+    height: '100%', borderRadius: 3,
   },
 
-  // ── Results phase ──
-  resultsContainer: {
-    flex: 1, backgroundColor: colors.background,
-    paddingHorizontal: spacing.screenPadding,
+  actionsFlat: {
+    paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1, borderTopColor: '#F8FAFC',
   },
-  resultsHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 56, paddingBottom: 16,
-  },
-  closeBtnDark: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+  btnPrimaryFlat: {
+    width: '100%', height: 56,
+    backgroundColor: colors.primary,
     justifyContent: 'center', alignItems: 'center',
+    borderRadius: 28,
   },
-  gravityBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: spacing.borderRadius.medium, marginBottom: 16,
+  btnSecondaryFlat: {
+    width: '100%', height: 56,
+    backgroundColor: 'transparent',
+    justifyContent: 'center', alignItems: 'center',
+    marginTop: 8,
+    borderRadius: 28,
   },
-  gravityDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
-  compositionCard: { marginBottom: 16 },
-  barRow: {
-    flexDirection: 'row', alignItems: 'center', marginBottom: 14,
-  },
-  barLabel: { flexDirection: 'row', alignItems: 'center', width: 140 },
-  barTrack: {
-    flex: 1, height: 10, backgroundColor: colors.border,
-    borderRadius: 5, overflow: 'hidden', marginHorizontal: 10,
-  },
-  barFill: { height: '100%', borderRadius: 5 },
-  barPercent: {
-    width: 40, textAlign: 'right', fontSize: 14,
-    fontWeight: '700', color: colors.textDark,
-  },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  statBox: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  actionsContainer: { marginTop: 'auto', paddingBottom: 40 },
 
-  // ── Success phase ──
+  // ── Success Phase ──
   successContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: 40,
+    alignItems: 'center', width: '100%',
   },
-  successCircle: {
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  pointsEarned: {
+  pointsEarnedFlat: {
     flexDirection: 'row', alignItems: 'baseline',
-    marginTop: 32, paddingVertical: 16, paddingHorizontal: 24,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: spacing.borderRadius.large,
+    marginTop: 40, paddingVertical: 12, paddingHorizontal: 24,
+    backgroundColor: 'rgba(52, 168, 83, 0.08)',
+    borderRadius: 100,
   },
 });

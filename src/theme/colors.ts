@@ -1,8 +1,8 @@
 export const colors = {
   // Primary brand colors
-  primary: '#1A5D1A', // A deep, rich, premium green
-  primaryLight: '#4E9F3D', // A fresh, vibrant green for accents
-  primaryLighter: '#D8E9A8', // Very light green for backgrounds
+  primary: '#34A853', // Un vert beaucoup plus vif et clair (Google Green)
+  primaryLight: '#81C784', // Un vert encore plus clair pour les accents
+  primaryLighter: '#E8F5E9', // Vert très clair pour les fonds
   
   // Secondary brand colors
   orange: '#FF7B00', // Orange brand color for rewards/points

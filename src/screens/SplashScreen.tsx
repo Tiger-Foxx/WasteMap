@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing, StatusBar } from 'react-native';
+import LottieView from 'lottie-react-native';
 import { Text } from '../components';
 import { colors } from '../theme';
 
@@ -15,21 +16,12 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   useEffect(() => {
     // Séquence d'animation d'entrée
     Animated.sequence([
-      // 1. Logo apparaît avec un scale + fade
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.cubic),
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
       // 2. Tagline apparaît
       Animated.timing(taglineFade, {
         toValue: 1,
@@ -46,46 +38,25 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Cercle décoratif en arrière-plan */}
-      <View style={styles.bgCircle1} />
-      <View style={styles.bgCircle2} />
-
-      {/* Logo et titre */}
-      <Animated.View
-        style={[
-          styles.logoContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {/* Icône de recyclage stylisée */}
-        <View style={styles.logoIcon}>
-          <View style={styles.logoInner}>
-            <Text variant="huge" weight="bold" color={colors.primary} align="center">
-              ♻
-            </Text>
-          </View>
-        </View>
-
-        <Text variant="huge" weight="bold" color={colors.white} align="center" style={styles.title}>
-          Waste
-          <Text variant="huge" weight="bold" color="#A8E6CF">
-            Map
-          </Text>
-        </Text>
+      {/* Lottie Animation */}
+      <Animated.View style={[styles.logoContainer, { opacity: fadeAnim }]}>
+        <LottieView
+          source={require('../../assets/lotties/Recycle-Loader.json')}
+          autoPlay
+          loop
+          style={{ width: 300, height: 300 }}
+        />
       </Animated.View>
 
       {/* Tagline */}
       <Animated.View style={[styles.taglineContainer, { opacity: taglineFade }]}>
-        <Text variant="m" color="rgba(255,255,255,0.8)" align="center">
-          Signaler • Nettoyer • Valoriser
+        <Text variant="xl" weight="bold" color={colors.textDark} align="center">
+          WasteMap
         </Text>
         <View style={styles.taglineLine} />
-        <Text variant="s" color="rgba(255,255,255,0.6)" align="center" style={styles.taglineSub}>
+        <Text variant="m" color={colors.textMuted} align="center" style={styles.taglineSub}>
           Ensemble pour des villes propres et durables
         </Text>
       </Animated.View>
@@ -96,62 +67,28 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  bgCircle1: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    top: -100,
-    right: -100,
-  },
-  bgCircle2: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    bottom: -50,
-    left: -80,
   },
   logoContainer: {
     alignItems: 'center',
-  },
-  logoIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   title: {
     letterSpacing: 1,
   },
   taglineContainer: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 80,
     alignItems: 'center',
     paddingHorizontal: 40,
   },
   taglineLine: {
     width: 40,
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 1,
+    height: 3,
+    backgroundColor: colors.primary,
+    borderRadius: 1.5,
     marginVertical: 12,
   },
   taglineSub: {

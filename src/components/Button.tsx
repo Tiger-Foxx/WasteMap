@@ -105,7 +105,7 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: spacing.borderRadius.large,
+    borderRadius: spacing.borderRadius.round, // Make it completely pill shaped according to user request
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

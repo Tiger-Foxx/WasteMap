@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../components';
-import { colors } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing } from '../theme';
 import { useAppStore } from '../hooks/useAppStore';
 
 // Screens
@@ -42,6 +42,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Leaderboard: undefined;
   Events: undefined;
+  Radar: undefined;
   ScanResult: undefined;
   Notifications: undefined;
 };
@@ -50,24 +51,57 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
+const TAB_BAR_HEIGHT = 68;
+const TAB_ICON_SIZE = 44;
+
 // ─── Tab Icons ──────────────────────────────────────────────
 
-const TabIcon = ({ label, iconName, focused }: { label: string; iconName: keyof typeof Ionicons.glyphMap; focused: boolean }) => (
-  <View style={tabStyles.iconContainer}>
-    <Ionicons name={iconName} size={focused ? 26 : 22} color={focused ? colors.primary : colors.textLight} />
-    <Text
-      variant="xs"
-      weight={focused ? 'semiBold' : 'regular'}
-      color={focused ? colors.primary : colors.textLight}
-      style={{ marginTop: 2 }}
-    >
-      {label}
-    </Text>
-  </View>
-);
+const TAB_BAR_COLOR = '#000000ff'; // Exact same as EcoPoints card
+
+const TabIcon = ({ iconName, focused }: { iconName: keyof typeof Ionicons.glyphMap; focused: boolean }) => {
+  const animValue = useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(animValue, {
+      toValue: focused ? 1 : 0,
+      friction: 6,
+      tension: 60,
+      useNativeDriver: true,
+    }).start();
+  }, [focused]);
+
+  const scale = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.4],
+  });
+
+  const translateY = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -10],
+  });
+
+  return (
+    <Animated.View style={[
+      tabStyles.pill, 
+      focused && tabStyles.pillActive,
+      { transform: [{ scale }, { translateY }] }
+    ]}>
+      <Ionicons name={iconName} size={24} color={focused ? '#FFFFFF' : '#64748B'} />
+    </Animated.View>
+  );
+};
 
 const tabStyles = StyleSheet.create({
-  iconContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 6 },
+  pill: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillActive: {
+    backgroundColor: colors.primary,
+  },
 });
 
 // ─── Auth Navigator ─────────────────────────────────────────
@@ -103,65 +137,75 @@ const AuthNavigator = () => {
 
 // ─── Main Tab Navigator ─────────────────────────────────────
 
-const MainTabs = () => (
-  <Tab.Navigator
-    screenOptions={{
-      headerShown: false,
-      tabBarStyle: {
-        height: 80,
-        paddingBottom: 16,
-        paddingTop: 8,
-        backgroundColor: colors.white,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-      },
-      tabBarShowLabel: false,
-    }}
-  >
+const MainTabs = () => {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarHideOnKeyboard: true,
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          position: 'absolute',
+          left: 20,
+          right: 20,
+          bottom: Math.max(insets.bottom, 20),
+          height: 64,
+          backgroundColor: TAB_BAR_COLOR,
+          borderRadius: 32,
+          borderTopWidth: 0,
+          elevation: 0,
+          paddingHorizontal: 0,
+          paddingVertical: 0,
+          marginHorizontal: 20,
+        },
+        tabBarItemStyle: {
+          flex: 1,
+          height: 64,
+          padding: 0,
+          marginVertical: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+      }}
+    >
     <Tab.Screen
       name="Home"
       component={HomeScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? "home" : "home-outline"} label="Accueil" focused={focused} /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'home' : 'home-outline'} focused={focused} /> }}
     />
     <Tab.Screen
       name="Map"
       component={MapScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? "map" : "map-outline"} label="Carte" focused={focused} /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'map' : 'map-outline'} focused={focused} /> }}
     />
     <Tab.Screen
-      name="Radar"
-      component={RadarScreen}
+      name="RadarTab"
+      component={HomeScreen}
+      listeners={({ navigation }) => ({
+        tabPress: (e) => {
+          e.preventDefault();
+          navigation.navigate('Radar');
+        },
+      })}
       options={{
-        tabBarIcon: ({ focused }) => (
-          <View style={{
-            width: 56, height: 56, borderRadius: 28,
-            backgroundColor: colors.primary, justifyContent: 'center',
-            alignItems: 'center', marginTop: -20,
-            shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
-          }}>
-            <Ionicons name="camera" size={28} color={colors.white} />
-          </View>
-        ),
+        tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'scan' : 'scan-outline'} focused={focused} />,
       }}
     />
     <Tab.Screen
       name="Rewards"
       component={RewardsScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? "gift" : "gift-outline"} label="Boutique" focused={focused} /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'gift' : 'gift-outline'} focused={focused} /> }}
     />
     <Tab.Screen
       name="Profile"
       component={ProfileScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? "person" : "person-outline"} label="Profil" focused={focused} /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'person' : 'person-outline'} focused={focused} /> }}
     />
-  </Tab.Navigator>
-);
+    </Tab.Navigator>
+  );
+};
 
 // ─── Root Stack (Main + Modals) ─────────────────────────────
 
@@ -174,6 +218,7 @@ const MainNavigator = () => (
       <RootStack.Screen name="Notifications" component={NotificationsScreen} />
     </RootStack.Group>
     <RootStack.Group screenOptions={{ presentation: 'fullScreenModal' }}>
+      <RootStack.Screen name="Radar" component={RadarScreen} />
       <RootStack.Screen name="ScanResult">
         {({ navigation }) => (
           <ScanResultScreen
