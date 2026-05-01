@@ -20,7 +20,9 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
-
+base64.txt
+secret_base64.txt
+wastemap.jks
 # debug
 npm-debug.*
 yarn-debug.*
