@@ -121,8 +121,8 @@ export const MapScreen = ({ navigation }: any) => {
   // Nouveaux états pour le sélecteur de tuile Leaflet
   const webViewRef = useRef<WebView>(null);
   const [showLayers, setShowLayers] = useState(false);
-  const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_LAYERS>('positron');
-  const activeLayerRef = useRef<keyof typeof TILE_LAYERS>('positron');
+  const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_LAYERS>('osm');
+  const activeLayerRef = useRef<keyof typeof TILE_LAYERS>('osm');
 
   const insets = useSafeAreaInsets();
 
