@@ -8,12 +8,29 @@ import { Text, Card } from '../../components';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user, reports, getUnreadCount } = useAppStore();
   const unreadCount = getUnreadCount();
+
+  const handleQuickScan = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      navigation.navigate('Radar', { photoUri: result.assets[0].uri });
+    }
+  };
 
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(20));
@@ -299,23 +316,23 @@ export const HomeScreen = ({ navigation }: any) => {
         <TouchableOpacity 
           style={styles.fab} 
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('Radar')}
-        >
-          <View style={styles.fabInner}>
-            <Ionicons name="scan" size={26} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
+            onPress={handleQuickScan}
+          >
+            <View style={styles.fabInner}>
+              <Ionicons name="scan" size={26} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
 
-    </View>
-  );
-};
+      </View>
+    );
+  };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAF8',
-  },
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#F8FAF8',
+    },
   scrollContent: {
     paddingTop: 50,
     paddingBottom: 140, // Espace pour la bottom bar

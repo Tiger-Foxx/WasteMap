@@ -15,17 +15,32 @@ const { width } = Dimensions.get('window');
 
 type Phase = 'intro' | 'preview' | 'analyzing';
 
-export const RadarScreen = () => {
+export const RadarScreen = ({ route }: any) => {
   const navigation = useNavigation<any>();
   const { reports } = useAppStore();
-  const [phase, setPhase] = useState<Phase>('intro');
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  
+  // Si on vient d'un autre écran (ex: raccourci scan) qui a déjà pris la photo, on a photoUri en param
+  const initialPhotoUri = route?.params?.photoUri || null;
+  const initialPhase = initialPhotoUri ? 'preview' : 'intro';
+
+  const [phase, setPhase] = useState<Phase>(initialPhase);
+  const [photoUri, setPhotoUri] = useState<string | null>(initialPhotoUri);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const scanLineAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
+
+  // React Navigation hooks to react to params changes
+  useEffect(() => {
+    if (route?.params?.photoUri) {
+      setPhotoUri(route.params.photoUri);
+      setPhase('preview');
+      // On retire le paramètre pour qu'une sortie normale ne revienne pas en boucle
+      navigation.setParams({ photoUri: undefined });
+    }
+  }, [route?.params?.photoUri]);
 
   useEffect(() => {
     Animated.parallel([

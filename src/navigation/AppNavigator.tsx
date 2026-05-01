@@ -46,7 +46,7 @@ export type RootStackParamList = {
   Leaderboard: undefined;
   Events: undefined;
   ManageEvent: { eventId: string };
-  Radar: undefined;
+  Radar: { photoUri?: string } | undefined;
   ScanResult: undefined;
   Notifications: undefined;
   CleaningAction: { reportId: string };
