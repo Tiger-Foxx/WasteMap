@@ -74,6 +74,7 @@ interface AppState {
 
   // Actions — Notifications
   markNotificationRead: (notificationId: string) => void;
+  markAllNotificationsRead: () => void;
   getUnreadCount: () => number;
 }
 
@@ -119,7 +120,7 @@ export const useAppStore = create<AppState>()(
       },
 
       logout: () => {
-        set({ isAuthenticated: false, user: null, activeCleaningSession: null });
+        set({ isAuthenticated: false, isOnboarded: false, user: null, activeCleaningSession: null });
       },
 
       completeOnboarding: () => {
@@ -315,6 +316,12 @@ export const useAppStore = create<AppState>()(
           notifications: state.notifications.map(n =>
             n.id === notificationId ? { ...n, isRead: true } : n
           ),
+        }));
+      },
+
+      markAllNotificationsRead: () => {
+        set((state) => ({
+          notifications: state.notifications.map(n => ({ ...n, isRead: true }))
         }));
       },
 
