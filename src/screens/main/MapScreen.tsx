@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, StatusBar, TouchableOpacity, ScrollView, Platform, Animated, Easing } from 'react-native';
 import { WebView } from 'react-native-webview';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
@@ -8,6 +8,29 @@ import { colors, spacing } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
 import { GravityLevel } from '../../models';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const TILE_LAYERS = {
+  positron: {
+    name: 'Clair',
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    icon: 'sunny-outline',
+  },
+  voyager: {
+    name: 'Standard',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    icon: 'map-outline',
+  },
+  dark: {
+    name: 'Sombre',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    icon: 'moon-outline',
+  },
+  osm: {
+    name: 'Détaillé',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    icon: 'navigate-outline',
+  }
+} as const;
 
 const gravityColors: Record<GravityLevel, string> = {
   low: '#10B981',
@@ -94,6 +117,13 @@ export const MapScreen = ({ navigation }: any) => {
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'cleaned'>('all');
+  
+  // Nouveaux états pour le sélecteur de tuile Leaflet
+  const webViewRef = useRef<WebView>(null);
+  const [showLayers, setShowLayers] = useState(false);
+  const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_LAYERS>('positron');
+  const activeLayerRef = useRef<keyof typeof TILE_LAYERS>('positron');
+
   const insets = useSafeAreaInsets();
 
   const filteredReports = reports.filter((r) => {
@@ -103,8 +133,20 @@ export const MapScreen = ({ navigation }: any) => {
 
   const selected = reports.find((r) => r.id === selectedReport);
 
+  const handleTileChange = (id: keyof typeof TILE_LAYERS) => {
+    setActiveLayer(id);
+    activeLayerRef.current = id;
+    setShowLayers(false);
+    webViewRef.current?.injectJavaScript(`
+      if (window.changeTileLayer) {
+        window.changeTileLayer('${TILE_LAYERS[id].url}');
+      }
+      true;
+    `);
+  };
+
   // Génération du HTML Leaflet dynamique
-  const generateLeafletHTML = () => {
+  const leafletHTML = useMemo(() => {
     const markersJS = filteredReports.map(report => {
       const color = gravityColors[report.analysis.gravity];
       return `
@@ -189,17 +231,25 @@ export const MapScreen = ({ navigation }: any) => {
         <div id="map"></div>
         <script>
           var map = L.map('map', {zoomControl: false}).setView([${YAOUNDE_REGION.latitude}, ${YAOUNDE_REGION.longitude}], 13);
-          /* Utilisation de CARTO Positron : très élégant, moins saturé que Voyager, parfait pour mettre en valeur les données sans piquer les yeux */
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          
+          window.currentTileLayer = L.tileLayer('${TILE_LAYERS[activeLayerRef.current].url}', {
             maxZoom: 19
           }).addTo(map);
+
+          window.changeTileLayer = function(newUrl) {
+            if (window.currentTileLayer) {
+              map.removeLayer(window.currentTileLayer);
+            }
+            window.currentTileLayer = L.tileLayer(newUrl, { maxZoom: 19 }).addTo(map);
+          };
+
           ${markersJS}
           ${collectionPointsJS}
         </script>
       </body>
       </html>
     `;
-  };
+  }, [filteredReports, collectionPoints]); // Ne dépend PAS de activeLayer pour ne pas rafraîchir WebView
 
   const onMessage = (event: any) => {
     try {
@@ -217,10 +267,11 @@ export const MapScreen = ({ navigation }: any) => {
       {/* ── MAP (LEAFLET via WEBVIEW) ── */}
       <View style={[styles.map, { backgroundColor: '#E2E8F0' }]}>
         <WebView 
+           ref={webViewRef}
            showsVerticalScrollIndicator={false}
            showsHorizontalScrollIndicator={false}
            originWhitelist={['*']}
-           source={{ html: generateLeafletHTML() }}
+           source={{ html: leafletHTML }}
            onMessage={onMessage}
            style={{ flex: 1, backgroundColor: 'transparent' }}
         />
@@ -310,6 +361,38 @@ export const MapScreen = ({ navigation }: any) => {
           </View>
         </View>
       ) : null}
+
+      {/* ── LAYER PICKER (Sélecteur de tuiles) ── */}
+      <View style={[styles.layerPickerContainer, { top: insets.top + 140 }]}>
+        <TouchableOpacity 
+          style={styles.layerPickerBtn} 
+          activeOpacity={0.8}
+          onPress={() => setShowLayers(!showLayers)}
+        >
+          <Ionicons name="layers" size={22} color={showLayers ? colors.primary : colors.textDark} />
+        </TouchableOpacity>
+
+        {showLayers ? (
+          <View style={styles.layerMenu}>
+            {(Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>).map((id) => {
+              const tile = TILE_LAYERS[id];
+              const isActive = activeLayer === id;
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[styles.layerMenuItem, isActive && styles.layerMenuItemActive]}
+                  onPress={() => handleTileChange(id)}
+                >
+                  <Ionicons name={tile.icon as any} size={18} color={isActive ? colors.white : colors.textDark} />
+                  <Text variant="xs" weight={isActive ? 'bold' : 'medium'} color={isActive ? colors.white : colors.textDark} style={{ marginLeft: 8 }}>
+                    {tile.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
 
       {/* ── PANNEAU DÉTAIL EN BAS ── */}
       {selected ? (
@@ -535,6 +618,47 @@ const styles = StyleSheet.create({
     height: 48, justifyContent: 'center', alignItems: 'center',
     flexDirection: 'row',
     width:'45%'
+  },
+  layerPickerContainer: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 999,
+    alignItems: 'flex-end',
+  },
+  layerPickerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  layerMenu: {
+    marginTop: 8,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 8,
+    width: 140,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  layerMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  layerMenuItemActive: {
+    backgroundColor: colors.primary,
   },
 });
 
