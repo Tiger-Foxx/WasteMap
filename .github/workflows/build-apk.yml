@@ -1,13 +1,16 @@
-name: Build Android APK
+name: Build Android APK & Release
 on:
-  workflow_dispatch: # Garde-le pour pouvoir lancer manuellement
+  workflow_dispatch:
   push:
     tags:
-      - 'v*' # C'est CA qui déclenche la magie au "git push origin v1.0.0"
+      - 'v*'
+
+permissions:
+  contents: write # Autorise la création de la Release GitHub
 
 jobs:
   build:
-    name: Build APK
+    name: Build & Release APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,11 +25,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24 # On anticipe la fin de Node 20
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Decode Keystore
+        run: |
+          # On décode la clé stockée dans les secrets GitHub pour la rendre utilisable par Gradle
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/wastemap.jks
+        continue-on-error: false
 
       - name: Prebuild Android project
         run: npx expo prebuild -p android --clean
@@ -34,11 +43,33 @@ jobs:
       - name: Assemble Release APK
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon
+          chmod +x gradlew
+          # Compilation avec signature dynamique via les secrets
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=wastemap.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }} \
+            --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wastemap-demo-apk
+          name: wastemap-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: android/app/build/outputs/apk/release/app-release.apk
+          name: Release ${{ github.ref_name }}
+          body: |
+            Build automatique de Wastemap.
+            Version : ${{ github.ref_name }}
+            Date : ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
