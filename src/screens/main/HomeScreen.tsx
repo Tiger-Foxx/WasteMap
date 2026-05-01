@@ -4,33 +4,16 @@ import {
   Animated, Easing, Dimensions, Image, ImageBackground
 } from 'react-native';
 import LottieView from 'lottie-react-native';
-import { Text, Card } from '../../components';
+import { Text, Card, ScannerFAB } from '../../components';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
-import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user, reports, getUnreadCount } = useAppStore();
   const unreadCount = getUnreadCount();
-
-  const handleQuickScan = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') return;
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      navigation.navigate('Radar', { photoUri: result.assets[0].uri });
-    }
-  };
 
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(20));
@@ -311,18 +294,8 @@ export const HomeScreen = ({ navigation }: any) => {
 
       </ScrollView>
 
-      {/* ── FAB Scan Rapide ──────────── */}
-      <Animated.View style={[styles.fabContainer, { opacity: fadeAnim }]}>
-        <TouchableOpacity 
-          style={styles.fab} 
-          activeOpacity={0.8}
-            onPress={handleQuickScan}
-          >
-            <View style={styles.fabInner}>
-              <Ionicons name="scan" size={26} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+      {/* ── FAB Scan Rapide (Maintenant centralisé) ──────────── */}
+      <ScannerFAB />
 
       </View>
     );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Text } from '../../components';
+import { Text, ScannerFAB } from '../../components';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
@@ -203,6 +203,7 @@ export const LeaderboardScreen = ({ navigation }: any) => {
         </View>
 
       </ScrollView>
+      <ScannerFAB />
     </View>
   );
 };

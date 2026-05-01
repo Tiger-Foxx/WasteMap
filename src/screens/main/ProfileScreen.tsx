@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, StatusBar, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../../components';
+import { Text, ScannerFAB } from '../../components';
 import { colors } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
 
@@ -130,6 +130,7 @@ export const ProfileScreen = () => {
 
         </View>
       </ScrollView>
+      <ScannerFAB />
     </View>
   );
 };

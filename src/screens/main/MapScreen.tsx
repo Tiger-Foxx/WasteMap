@@ -3,7 +3,7 @@ import { View, StyleSheet, StatusBar, TouchableOpacity, ScrollView, Platform, An
 import { WebView } from 'react-native-webview';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../../components';
+import { Text, ScannerFAB } from '../../components';
 import { colors, spacing } from '../../theme';
 import { useAppStore } from '../../hooks/useAppStore';
 import { GravityLevel } from '../../models';
@@ -378,6 +378,8 @@ export const MapScreen = ({ navigation }: any) => {
           )}
         </View>
       ) : null}
+
+      <ScannerFAB />
     </View>
   );
 };
