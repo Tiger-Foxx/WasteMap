@@ -8,13 +8,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const typeConfig: Record<AppNotification['type'], { iconName: keyof typeof Ionicons.glyphMap; color: string; bgColor: string }> = {
-  report_update: { iconName: 'location-outline', color: '#3B82F6', bgColor: '#EFF6FF' },
-  cleaning_validated: { iconName: 'checkmark-circle-outline', color: '#10B981', bgColor: '#ECFDF5' },
-  points_earned: { iconName: 'leaf-outline', color: '#10B981', bgColor: '#ECFDF5' },
-  event_invite: { iconName: 'calendar-outline', color: '#F59E0B', bgColor: '#FEF3C7' },
-  badge_unlocked: { iconName: 'medal-outline', color: '#8B5CF6', bgColor: '#EEF2FF' },
-  reward_activated: { iconName: 'gift-outline', color: '#FF7900', bgColor: '#FFF7ED' },
-  system: { iconName: 'notifications-outline', color: '#64748B', bgColor: '#F8FAFC' },
+  report_update: { iconName: 'location-outline', color: '#10B981', bgColor: '#F0FDF4' },
+  cleaning_validated: { iconName: 'checkmark', color: '#10B981', bgColor: '#F0FDF4' },
+  points_earned: { iconName: 'leaf-outline', color: '#10B981', bgColor: '#F0FDF4' },
+  event_invite: { iconName: 'calendar-outline', color: '#10B981', bgColor: '#F0FDF4' },
+  badge_unlocked: { iconName: 'medal-outline', color: '#10B981', bgColor: '#F0FDF4' },
+  reward_activated: { iconName: 'gift-outline', color: '#10B981', bgColor: '#F0FDF4' },
+  system: { iconName: 'notifications-outline', color: '#10B981', bgColor: '#F0FDF4' },
 };
 
 const timeAgo = (dateStr: string): string => {
@@ -69,10 +69,13 @@ export const NotificationsScreen = ({ navigation }: any) => {
 
   const renderGroup = (title: string, data: AppNotification[]) => {
     if (data.length === 0) return null;
+    // Map specific titles to reference mockup logic if needed, else use title directly
+    const displayTitle = title === "Plus anciennes" ? "Plus anciennes" : title;
+
     return (
       <View style={styles.groupContainer}>
-        <Text variant="s" weight="bold" color={colors.textLight} style={styles.groupHeader}>
-          {title.toUpperCase()}
+        <Text variant="m" color="#718096" style={styles.groupHeader}>
+          {displayTitle}
         </Text>
         {data.map(notif => {
           const config = typeConfig[notif.type] || typeConfig.system;
@@ -86,26 +89,29 @@ export const NotificationsScreen = ({ navigation }: any) => {
                 !notif.isRead && styles.unreadCard
               ]}
             >
+              {!notif.isRead && <View style={styles.unreadBorderLeft} />}
               <View style={styles.cardHeaderRow}>
                 <View style={[styles.iconWrapper, { backgroundColor: config.bgColor }]}>
-                  <Ionicons name={config.iconName} size={20} color={config.color} />
+                  <Ionicons name={config.iconName} size={22} color={config.color} />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, marginLeft: 16 }}>
                   <View style={styles.titleRow}>
-                    <Text variant="m" weight="bold" color={colors.textDark} style={{ flex: 1 }} numberOfLines={1}>
+                    <Text variant="m" weight="bold" color="#1A202C" style={{ flex: 1, fontSize: 16 }} numberOfLines={1}>
                       {notif.title}
                     </Text>
                     {!notif.isRead && <View style={styles.unreadDot} />}
                   </View>
-                  <Text variant="xs" color={colors.textLight}>
+                  <Text variant="xs" color="#A0AEC0" style={{ marginTop: 2 }}>
                     {timeAgo(notif.createdAt)}
                   </Text>
                 </View>
               </View>
               
-              <Text variant="s" color={colors.textMuted} style={styles.bodyText}>
-                {notif.body}
-              </Text>
+              <View style={{ paddingLeft: 60, marginTop: -2 }}>
+                <Text variant="s" color="#4A5568" style={[styles.bodyText, { lineHeight: 20 }]}>
+                  {notif.body}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -121,14 +127,14 @@ export const NotificationsScreen = ({ navigation }: any) => {
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity style={styles.backBtnFlat} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color={colors.textDark} />
+            <Ionicons name="arrow-back" size={24} color="#1A202C" />
           </TouchableOpacity>
-          <Text variant="xl" weight="bold" color={colors.textDark} style={{ marginLeft: 16 }}>
+          <Text variant="xl" weight="bold" color="#1A202C" style={{ marginLeft: 16, fontSize: 22 }}>
             Notifications
           </Text>
         </View>
         <TouchableOpacity style={styles.readAllBtn} onPress={markAllNotificationsRead}>
-          <Ionicons name="checkmark-done" size={20} color={colors.primary} />
+          <Ionicons name="checkmark" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -177,18 +183,14 @@ const styles = StyleSheet.create({
   backBtnFlat: {
     width: 40, 
     height: 40, 
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1, 
-    borderColor: '#E2E8F0',
     justifyContent: 'center', 
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   readAllBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F0FDF4',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -201,25 +203,39 @@ const styles = StyleSheet.create({
   },
   groupHeader: {
     marginBottom: 12,
-    letterSpacing: 1,
+    letterSpacing: 0,
+    color: '#A0AEC0',
+    textTransform: 'none',
+    fontSize: 15,
   },
   flatCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#F1F5F9',
     padding: 16,
     marginBottom: 12,
+    flexDirection: 'column',
+    position: 'relative',
+    overflow: 'hidden',
   },
   unreadCard: {
-    borderColor: colors.primary,
-    backgroundColor: '#F0FDF4',
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  unreadBorderLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 10,
+    bottom: 10,
+    width: 3,
+    backgroundColor: colors.primary,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
   },
   cardHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+    alignItems: 'flex-start',
   },
   iconWrapper: {
     width: 44, 
@@ -230,20 +246,21 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 2,
   },
   unreadDot: {
-    width: 8, 
-    height: 8, 
-    borderRadius: 4,
+    width: 6, 
+    height: 6, 
+    borderRadius: 3,
     backgroundColor: colors.primary,
     marginLeft: 8,
+    marginTop: 6,
   },
   bodyText: {
     lineHeight: 20,
-    paddingLeft: 56, // Align with text content
+    paddingLeft: 0,
   },
   emptyState: {
     alignItems: 'center',
