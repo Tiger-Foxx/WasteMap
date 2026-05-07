@@ -58,6 +58,13 @@ export const HomeScreen = ({ navigation }: any) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAF8" />
       
+      {/* ── Background Leaf Motif ──────────── */}
+      <Image 
+        source={require('../../../assets/illustrations/herb.png')} 
+        style={styles.herbMotif}
+        resizeMode="contain"
+      />
+
       <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={styles.scrollContent}>
         
         {/* ── App Logo Header ──────────── */}
@@ -95,9 +102,10 @@ export const HomeScreen = ({ navigation }: any) => {
           
           {/* Main EcoScore Card (DARK MODE - EXACTLY AS REQUESTED) */}
           <TouchableOpacity style={styles.ecoCardDark} onPress={() => navigation.navigate('Rewards')}>
+            {/* Adding topographic lines overlay if we had the image but for now simulated clean solid color will work fine. */}
             <View style={styles.ecoCardHeader}>
               <View style={styles.ecoIconWrapperDark}>
-                <Ionicons name="star" size={16} color="#FFFFFF" />
+                <Ionicons name="leaf" size={16} color="#FFFFFF" />
               </View>
               <Image 
                 source={require('../../../ressources/images/logo-orange.png')} 
@@ -112,14 +120,15 @@ export const HomeScreen = ({ navigation }: any) => {
                   SOLDE ECOPOINTS
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
-                  <Text variant="huge" weight="bold" color={colors.primary}>
+                  <Text variant="huge" weight="bold" color="#FFFFFF">
                     {user.ecoPoints.toLocaleString()}
                   </Text>
-                  <Ionicons name="leaf" size={28} color={colors.primary} style={{ marginBottom: 6 }} />
+                  <Ionicons name="leaf" size={24} color="#D8E9A8" style={{ marginBottom: 6 }} />
                 </View>
               </View>
-              <View style={styles.convertBtn}>
-                <Text variant="xs" weight="bold" color="#FF7900">Échanger</Text>
+              <View style={[styles.convertBtn, { flexDirection: 'row', alignItems: 'center' }]}>
+                <Text variant="xs" weight="bold" color="#D8E9A8">Échanger </Text>
+                <Ionicons name="chevron-forward" size={12} color="#D8E9A8" />
               </View>
             </View>
           </TouchableOpacity>
@@ -128,36 +137,31 @@ export const HomeScreen = ({ navigation }: any) => {
           <Animated.View style={getSectionStyle(1)}>
             <TouchableOpacity style={[styles.statBgCard, { marginBottom: 16 }]} activeOpacity={0.9}>
               <ImageBackground source={require('../../../assets/illustrations/co2.png')} style={styles.bgImage} imageStyle={{ borderRadius: 20 }}>
-                <View style={styles.bgOverlay} />
                 <View style={[styles.bgContent, { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                   <View>
-                    <Text variant="xl" color="#FFFFFF" style={{ fontWeight: '900', fontSize: 26, letterSpacing: -0.5 }}>{user.stats.co2SavedKg.toFixed(1)} kg</Text>
-                    <Text variant="s" weight="bold" color="rgba(255,255,255,0.9)">CO₂ Évité</Text>
+                    <View style={styles.iconCircle}>
+                      <Ionicons name="leaf" size={16} color={colors.primary} />
+                    </View>
+                    <Text variant="xl" color="#111" style={{ fontWeight: '900', fontSize: 26, letterSpacing: -0.5 }}>{user.stats.co2SavedKg.toFixed(1)} kg</Text>
+                    <Text variant="s" weight="bold" color={colors.primary}>CO₂ Évité</Text>
                   </View>
-                  <LottieView
-                    source={require('../../../assets/lotties/Carbon Calculator.json')}
-                    autoPlay
-                    loop
-                    style={{ width: 80, height: 80, right: 10 }}
-                  />
+                  <View style={styles.arrowCircle}>
+                    <Ionicons name="chevron-forward" size={16} color="#111" />
+                  </View>
                 </View>
               </ImageBackground>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.statBgCard} activeOpacity={0.9}>
               <ImageBackground source={require('../../../assets/illustrations/dechets.png')} style={styles.bgImage} imageStyle={{ borderRadius: 20 }}>
-                <View style={styles.bgOverlay} />
                 <View style={[styles.bgContent, { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                   <View>
-                    <Text variant="xl" color="#FFFFFF" style={{ fontWeight: '900', fontSize: 26, letterSpacing: -0.5 }}>{user.stats.wasteCollectedKg} kg</Text>
-                    <Text variant="s" weight="bold" color="rgba(255,255,255,0.9)">Déchets</Text>
+                    <Text variant="xl" color="#111" style={{ fontWeight: '900', fontSize: 26, letterSpacing: -0.5 }}>{user.stats.wasteCollectedKg} kg</Text>
+                    <Text variant="s" weight="bold" color={colors.textLight}>Déchets</Text>
                   </View>
-                  <LottieView
-                    source={require('../../../assets/lotties/Recycle-Loader.json')}
-                    autoPlay
-                    loop
-                    style={{ width: 70, height: 70, right: 10 }}
-                  />
+                  <View style={styles.arrowCircle}>
+                    <Ionicons name="chevron-forward" size={16} color="#111" />
+                  </View>
                 </View>
               </ImageBackground>
             </TouchableOpacity>
@@ -318,6 +322,15 @@ export const HomeScreen = ({ navigation }: any) => {
     width: 140,
     height: 40,
   },
+  herbMotif: {
+    position: 'absolute',
+    top: -20,
+    right: -40,
+    width: 250,
+    height: 250,
+    opacity: 1,
+    zIndex: 0,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -358,10 +371,11 @@ export const HomeScreen = ({ navigation }: any) => {
     marginBottom: 32,
   },
   ecoCardDark: {
-    backgroundColor: '#000000',
+    backgroundColor: '#1B3E2D',
     borderRadius: 24,
     padding: 24,
     marginBottom: 16,
+    overflow: 'hidden',
   },
   ecoCardHeader: {
     flexDirection: 'row',
@@ -373,7 +387,7 @@ export const HomeScreen = ({ navigation }: any) => {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -383,10 +397,10 @@ export const HomeScreen = ({ navigation }: any) => {
     alignItems: 'flex-end',
   },
   convertBtn: {
-    backgroundColor: 'rgba(255, 121, 0, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 20,
   },
   statsRow: {
     flexDirection: 'row',
@@ -398,6 +412,11 @@ export const HomeScreen = ({ navigation }: any) => {
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    shadowColor: 'rgba(56, 161, 105, 0.1)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 3,
   },
   statCard: {
     width: (width - 64) / 2, 
@@ -451,6 +470,27 @@ export const HomeScreen = ({ navigation }: any) => {
   bgContent: {
     padding: 16,
     zIndex: 2,
+  },
+  arrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: 'rgba(56, 161, 105, 0.15)', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1, shadowRadius: 8, elevation: 4,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: 'rgba(56, 161, 105, 0.15)', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1, shadowRadius: 6, elevation: 3,
   },
   recentSection: {
     paddingHorizontal: 24,

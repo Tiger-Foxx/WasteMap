@@ -20,11 +20,8 @@ import { RewardsScreen } from '../screens/main/RewardsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { LeaderboardScreen } from '../screens/main/LeaderboardScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
-import { ManageEventScreen } from '../screens/main/ManageEventScreen';
 import { ScanResultScreen } from '../screens/main/ScanResultScreen';
 import { NotificationsScreen } from '../screens/main/NotificationsScreen';
-import { CleaningActionScreen } from '../screens/main/CleaningActionScreen';
-import { CleaningResultScreen } from '../screens/main/CleaningResultScreen';
 
 // ─── Types de navigation ────────────────────────────────────
 
@@ -45,12 +42,8 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Leaderboard: undefined;
   Events: undefined;
-  ManageEvent: { eventId: string };
-  Radar: { photoUri?: string } | undefined;
   ScanResult: undefined;
   Notifications: undefined;
-  CleaningAction: { reportId: string };
-  CleaningResult: { reportId: string; mediaAvant?: string | null; mediaApres?: string | null };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -64,7 +57,7 @@ const TAB_ICON_SIZE = 44;
 
 const TAB_BAR_COLOR = '#000000ff'; // Exact same as EcoPoints card
 
-const TabIcon = ({ iconName, focused, activeColor = colors.primary }: { iconName: keyof typeof Ionicons.glyphMap; focused: boolean; activeColor?: string }) => {
+const TabIcon = ({ iconName, focused }: { iconName: keyof typeof Ionicons.glyphMap; focused: boolean }) => {
   const animValue = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
@@ -72,7 +65,7 @@ const TabIcon = ({ iconName, focused, activeColor = colors.primary }: { iconName
       toValue: focused ? 1 : 0,
       friction: 6,
       tension: 60,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [focused]);
 
@@ -86,15 +79,11 @@ const TabIcon = ({ iconName, focused, activeColor = colors.primary }: { iconName
     outputRange: [0, -10],
   });
 
-  const backgroundColor = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['transparent', activeColor],
-  });
-
   return (
     <Animated.View style={[
       tabStyles.pill, 
-      { transform: [{ scale }, { translateY }], backgroundColor }
+      focused && tabStyles.pillActive,
+      { transform: [{ scale }, { translateY }] }
     ]}>
       <Ionicons name={iconName} size={24} color={focused ? '#FFFFFF' : '#64748B'} />
     </Animated.View>
@@ -108,6 +97,9 @@ const tabStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pillActive: {
+    backgroundColor: colors.primary,
   },
 });
 
@@ -163,8 +155,8 @@ const MainTabs = () => {
           borderRadius: 32,
           borderTopWidth: 0,
           elevation: 0,
-          paddingHorizontal: 0,
-          paddingVertical: 0,
+          paddingHorizontal: 0, // MUST BE 0 FOR PERFECT ALIGNMENT
+          paddingVertical: 0,   // MUST BE 0 FOR PERFECT ALIGNMENT
           marginHorizontal: 20,
         },
         tabBarItemStyle: {
@@ -188,14 +180,8 @@ const MainTabs = () => {
       options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'map' : 'map-outline'} focused={focused} /> }}
     />
     <Tab.Screen
-      name="RadarTab"
-      component={HomeScreen}
-      listeners={({ navigation }) => ({
-        tabPress: (e) => {
-          e.preventDefault();
-          navigation.navigate('Radar');
-        },
-      })}
+      name="Radar"
+      component={RadarScreen}
       options={{
         tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'scan' : 'scan-outline'} focused={focused} />,
       }}
@@ -203,7 +189,7 @@ const MainTabs = () => {
     <Tab.Screen
       name="Rewards"
       component={RewardsScreen}
-      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'gift' : 'gift-outline'} focused={focused} activeColor="#FF7900" /> }}
+      options={{ tabBarIcon: ({ focused }) => <TabIcon iconName={focused ? 'gift' : 'gift-outline'} focused={focused} /> }}
     />
     <Tab.Screen
       name="Profile"
@@ -222,27 +208,17 @@ const MainNavigator = () => (
     <RootStack.Group screenOptions={{ presentation: 'modal' }}>
       <RootStack.Screen name="Leaderboard" component={LeaderboardScreen} />
       <RootStack.Screen name="Events" component={EventsScreen} />
-      <RootStack.Screen name="ManageEvent" component={ManageEventScreen} />
       <RootStack.Screen name="Notifications" component={NotificationsScreen} />
     </RootStack.Group>
     <RootStack.Group screenOptions={{ presentation: 'fullScreenModal' }}>
-      <RootStack.Screen name="Radar" component={RadarScreen} />
       <RootStack.Screen name="ScanResult">
         {({ navigation }) => (
           <ScanResultScreen
             onClose={() => navigation.goBack()}
             onConfirm={() => navigation.goBack()}
-            onCleanNow={() => {
-              navigation.goBack();
-              setTimeout(() => {
-                navigation.navigate('CleaningAction', { reportId: 'new_report' });
-              }, 100);
-            }}
           />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="CleaningAction" component={CleaningActionScreen} />
-      <RootStack.Screen name="CleaningResult" component={CleaningResultScreen} />
     </RootStack.Group>
   </RootStack.Navigator>
 );
