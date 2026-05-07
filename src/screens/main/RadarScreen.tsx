@@ -168,6 +168,16 @@ export const RadarScreen = ({ route }: any) => {
             ))}
           </View>
 
+          {/* CTA Boxed in scrollview */}
+          <View style={styles.inlineCta}>
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleTakePhoto} activeOpacity={0.85}>
+              <Ionicons name="camera" size={22} color="#FFFFFF" />
+              <Text variant="m" weight="bold" color="#FFFFFF" style={{ marginLeft: 10 }}>
+                Prendre une photo
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* History section */}
           {reports.length > 0 && (
             <View style={styles.historySection}>
@@ -207,16 +217,6 @@ export const RadarScreen = ({ route }: any) => {
             </View>
           )}
         </ScrollView>
-
-        {/* Floating CTA */}
-        <View style={styles.floatingCta}>
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleTakePhoto} activeOpacity={0.85}>
-            <Ionicons name="camera" size={22} color="#FFFFFF" />
-            <Text variant="m" weight="bold" color="#FFFFFF" style={{ marginLeft: 10 }}>
-              Prendre une photo
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
@@ -429,12 +429,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(52, 168, 83, 0.08)',
   },
 
-  // Floating CTA
-  floatingCta: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 24, paddingBottom: 40, paddingTop: 16,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1, borderTopColor: '#F8FAFC',
+  // Inline CTA
+  inlineCta: {
+    paddingHorizontal: 24,
+    marginTop: 10,
+    marginBottom: 30,
   },
   primaryBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',

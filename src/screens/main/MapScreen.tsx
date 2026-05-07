@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   },
   profileBadge: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.primary,
     justifyContent: 'center', alignItems: 'center',
   },
   headerTextContainer: {
@@ -525,8 +525,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.06)',
   },
   filterChipActive: {
-    backgroundColor: colors.textDark,
-    borderColor: colors.textDark,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 
   legendPanel: {
